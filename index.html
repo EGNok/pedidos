@@ -211,6 +211,23 @@
   .badge-pendiente{background:var(--pendiente-soft);color:var(--pendiente);}
   .badge-reservado{background:var(--ok-soft);color:var(--ok);}
   .badge-confirmada{background:var(--ok-soft);color:var(--ok);}
+  .badge-eco{background:#EDE4F6;color:#6B3FA0;}
+
+  .field input.readonly-field{background:var(--line-soft);color:var(--ink-soft);font-weight:700;}
+
+  .tipo-toggle{display:flex;gap:10px;}
+  .tipo-opt{
+    display:flex;align-items:center;gap:7px;
+    border:1px solid var(--line);
+    padding:9px 16px;border-radius:8px;
+    font-size:13.5px;font-weight:600;color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .tipo-opt input{margin:0;}
+  .tipo-opt.active{border-color:var(--oficina);color:var(--oficina);background:var(--oficina-soft);}
+
+  .eco-block{margin-bottom:8px;}
+  .eco-block > span{display:block;font-size:11.5px;font-weight:700;color:var(--ink-faint);margin-bottom:2px;}
 
   .alerta-flag{
     color:var(--alerta);
@@ -222,6 +239,18 @@
     margin-top:4px;
   }
   .alerta-flag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--alerta);display:inline-block;}
+
+  .row-nota-oficina td{padding-top:0;padding-bottom:12px;}
+  .nota-oficina{
+    background:#FFF4B8;
+    border-left:3px solid #E0B400;
+    color:#6B5300;
+    padding:9px 12px;
+    border-radius:0 7px 7px 0;
+    font-size:13px;
+    line-height:1.4;
+  }
+  .nota-oficina strong{color:#8A6B00;}
 
   .muted{color:var(--ink-faint);}
   .empty-state{
@@ -319,6 +348,46 @@
     tbody td{display:block;padding:6px 14px;}
     tbody tr{display:block;padding:10px 0;border-bottom:1px solid var(--line);}
     tbody tr.row-alerta td:first-child{box-shadow:none;}
+  }
+
+  /* ---------- Impresión: Nota de Pedido ---------- */
+  #print-area{display:none;}
+  .nota-pedido{font-family:'Inter',system-ui,sans-serif;color:#000;}
+  .nota-pedido .np-print-title{
+    text-align:center;font-size:22px;font-weight:800;
+    border:2px solid #000;padding:10px;margin:0;
+  }
+  .nota-pedido table{width:100%;border-collapse:collapse;}
+  .nota-pedido table.np-print-head td{border:1px solid #000;padding:5px 9px;font-size:12.5px;}
+  .nota-pedido .np-print-section{font-weight:800;text-align:left;}
+  .nota-pedido .np-print-lbl{font-weight:700;}
+  .nota-pedido .np-print-lbl.italic{font-style:italic;font-weight:400;}
+  .nota-pedido .np-print-lbl.right{text-align:right;}
+  .nota-pedido .np-print-val.bold{font-weight:700;}
+  .nota-pedido table.np-print-items{margin-top:14px;}
+  .nota-pedido table.np-print-items th, .nota-pedido table.np-print-items td{
+    border:1px solid #000;padding:5px 10px;font-size:12.5px;text-align:center;
+  }
+  .nota-pedido table.np-print-items th{font-weight:800;}
+  .nota-pedido .np-print-eco-row{display:flex;margin-top:14px;align-items:stretch;}
+  .nota-pedido .np-print-eco-row table.np-print-items{margin-top:0;}
+  .nota-pedido .np-print-eco-label{
+    width:85px;border:1px solid #000;border-right:none;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:12.5px;text-align:center;
+  }
+  .nota-pedido table.np-print-aclaracion{margin-top:14px;}
+  .nota-pedido table.np-print-aclaracion td{border:1px solid #000;}
+  .nota-pedido table.np-print-aclaracion td.np-print-section{padding:5px 9px;text-align:center;}
+  .nota-pedido table.np-print-aclaracion td.np-print-box{
+    border-top:none;height:90px;vertical-align:top;padding:8px;font-size:12.5px;
+  }
+  .nota-pedido table.np-print-aclaracion td.np-print-box.highlight{background:#FFF200;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #print-area, #print-area *{visibility:visible;}
+    #print-area{display:block;position:absolute;top:0;left:0;width:100%;padding:16px;}
   }
 </style>
 </head>
@@ -435,7 +504,7 @@
         <div class="card">
           <table>
             <thead>
-              <tr><th>N° Pedido</th><th>Empresa</th><th>Chofer / Matrícula</th><th>Aclaración</th><th>Armado</th></tr>
+              <tr><th>N° Pedido</th><th>Empresa</th><th>Chofer / Matrícula</th><th>Aclaración</th><th>Armado</th><th></th></tr>
             </thead>
             <tbody id="de-reservados-body"></tbody>
           </table>
@@ -468,6 +537,7 @@
 </div>
 
 <div id="toast"></div>
+<div id="print-area"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -494,9 +564,26 @@ const USERS = {
   sc3353:         { label: "Sargento Cabral 3353",   rol: "deposito", password: "deposito2" }
 };
 
+// Último N° de pedido ya usado antes de esta app (hoy: 26). El próximo
+// pedido que se cargue toma automáticamente el número siguiente.
+const ULTIMO_NUMERO_REGISTRADO = 26;
+
 let currentUser = null; // {key,label,rol}
 let pedidosCache = [];
 let solicitudesCache = [];
+let numeroPedidoActual = null;
+
+function siguienteNumeroPedido(){
+  let max = ULTIMO_NUMERO_REGISTRADO;
+  pedidosCache.forEach(p=>{
+    const match = String(p.numeroPedido || "").match(/(\d+)/);
+    if(match){
+      const n = parseInt(match[1], 10);
+      if(!isNaN(n) && n > max) max = n;
+    }
+  });
+  return "PED-" + String(max + 1).padStart(4, "0");
+}
 
 /* ===================== HELPERS ===================== */
 function escapeHtml(str){
@@ -641,6 +728,14 @@ function itemsResumen(items){
   ).join("") + '</div>';
 }
 
+function renderItemsBlock(p){
+  if(p.tipoPedido === "eco"){
+    return `<div class="eco-block"><span>Remito</span>${itemsResumen(p.itemsRemito)}</div>
+      <div class="eco-block"><span>Entrega</span>${itemsResumen(p.itemsEntrega)}</div>`;
+  }
+  return itemsResumen(p.items);
+}
+
 function renderPedidos(){
   if(!currentUser) return;
   if(currentUser.rol === "oficina") renderPedidosOficina();
@@ -658,17 +753,18 @@ function renderPedidosOficina(){
     const badge = p.estado === "reservado"
       ? '<span class="badge badge-reservado">Reservado</span>'
       : '<span class="badge badge-pendiente">Pendiente</span>';
+    const ecoBadge = p.tipoPedido === "eco" ? '<span class="badge badge-eco">Eco</span>' : "";
     const detailBtn = p.estado === "reservado"
-      ? `<button class="expand-link" onclick="verDetalleSenasa('${p.id}')">Ver datos SENASA</button>`
+      ? `<button class="expand-link" onclick="verDetalleSenasa('${p.id}')">Ver datos SENASA</button><br>`
       : "";
     return `<tr>
-      <td><strong>${escapeHtml(p.numeroPedido)}</strong></td>
+      <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${p.numeroSPR ? `<div class="muted" style="font-size:11.5px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
       <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
       <td>${fmtDate(p.fecha)}</td>
       <td>${fmtDate(p.fechaEntrega)}</td>
-      <td>${itemsResumen(p.items)}</td>
+      <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
       <td>${badge}</td>
-      <td>${detailBtn}</td>
+      <td>${detailBtn}<button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button></td>
     </tr>`;
   }).join("");
 }
@@ -691,13 +787,17 @@ function renderPedidosDeposito(){
     pEmpty.style.display="none";
     pBody.innerHTML = pendientes.map(p=>{
       const overdue = isOverdue(p);
+      const ecoBadge = p.tipoPedido === "eco" ? '<span class="badge badge-eco">Eco</span>' : "";
       return `<tr class="${overdue ? "row-alerta":""}">
-        <td><strong>${escapeHtml(p.numeroPedido)}</strong>${overdue ? '<div class="alerta-flag">Vencido (48hs+)</div>' : ""}</td>
+        <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${overdue ? '<div class="alerta-flag">Vencido (48hs+)</div>' : ""}${p.numeroSPR ? `<div class="muted" style="font-size:11.5px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
         <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
         <td>${fmtDate(p.fecha)}</td>
         <td>${fmtDate(p.fechaEntrega)}</td>
-        <td>${itemsResumen(p.items)}</td>
-        <td><button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">Marcar armado y reservado</button></td>
+        <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">Marcar armado y reservado</button><br>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="imprimirPedido('${p.id}')">Imprimir</button>
+        </td>
       </tr>`;
     }).join("");
   }
@@ -714,9 +814,74 @@ function renderPedidosDeposito(){
       <td>${escapeHtml(p.numeroChofer||"—")} / ${escapeHtml(p.matricula||"—")}</td>
       <td>${escapeHtml(p.aclaracion||"—")}</td>
       <td>${fmtDateTime(p.fechaArmado)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button></td>
     </tr>`).join("");
   }
 }
+
+window.imprimirPedido = function(id){
+  const p = pedidosCache.find(x=>x.id===id);
+  if(!p) return;
+
+  const headHtml = `
+    <table class="np-print-head">
+      <tr><td class="np-print-lbl">EMPRESA:</td><td colspan="3">${escapeHtml(p.empresa||"")}</td></tr>
+      <tr><td class="np-print-section" colspan="4">DATOS DEL CLIENTE</td></tr>
+      <tr>
+        <td class="np-print-lbl italic">Entidad:</td>
+        <td>${escapeHtml(p.entidad||"")}</td>
+        <td class="np-print-lbl right">N° de Pedido:</td>
+        <td class="np-print-val bold">${escapeHtml(p.numeroPedido||"")}</td>
+      </tr>
+      <tr>
+        <td class="np-print-lbl italic">SPR:</td>
+        <td>${escapeHtml(p.numeroSPR||"")}</td>
+        <td class="np-print-lbl right">Fecha:</td>
+        <td class="np-print-val bold">${fmtDate(p.fecha)}</td>
+      </tr>
+      <tr>
+        <td></td><td></td>
+        <td class="np-print-lbl right">Fecha Entrega:</td>
+        <td class="np-print-val bold">${fmtDate(p.fechaEntrega)}</td>
+      </tr>
+    </table>`;
+
+  function itemsTable(items){
+    const rows = (items||[]).map(it=>
+      `<tr><td>${escapeHtml(it.item)}</td><td>${escapeHtml(it.cantidad)}</td><td>${escapeHtml(it.unidad||"")}</td></tr>`
+    ).join("");
+    const blanks = `<tr><td>&nbsp;</td><td></td><td></td></tr>`.repeat(2);
+    return `<table class="np-print-items">
+      <thead><tr><th>ITEM</th><th>CANTIDAD</th><th>UNIDAD</th></tr></thead>
+      <tbody>${rows}${blanks}</tbody>
+    </table>`;
+  }
+
+  let itemsHtml;
+  if(p.tipoPedido === "eco"){
+    itemsHtml = `
+      <div class="np-print-eco-row"><div class="np-print-eco-label">REMITO</div>${itemsTable(p.itemsRemito)}</div>
+      <div class="np-print-eco-row"><div class="np-print-eco-label">ENTREGA</div>${itemsTable(p.itemsEntrega)}</div>`;
+  } else {
+    itemsHtml = itemsTable(p.items);
+  }
+
+  const aclaracionHtml = `
+    <table class="np-print-aclaracion">
+      <tr><td class="np-print-section">ACLARACION</td></tr>
+      <tr><td class="np-print-box${p.aclaracionOficina ? " highlight" : ""}">${escapeHtml(p.aclaracionOficina||"")}</td></tr>
+    </table>`;
+
+  document.getElementById("print-area").innerHTML = `
+    <div class="nota-pedido">
+      <div class="np-print-title">NOTA DE PEDIDO</div>
+      ${headHtml}
+      ${itemsHtml}
+      ${aclaracionHtml}
+    </div>`;
+
+  window.print();
+};
 
 window.verDetalleSenasa = function(id){
   const p = pedidosCache.find(x=>x.id===id);
@@ -727,14 +892,17 @@ window.verDetalleSenasa = function(id){
     <div class="detail-block">
       <div class="d-row"><span>Empresa</span><span>${escapeHtml(p.empresa)}</span></div>
       <div class="d-row"><span>Entidad</span><span>${escapeHtml(p.entidad||"—")}</span></div>
+      <div class="d-row"><span>N° de SPR</span><span>${escapeHtml(p.numeroSPR||"—")}</span></div>
+      <div class="d-row"><span>Tipo de pedido</span><span>${p.tipoPedido === "eco" ? "Eco" : "Normal"}</span></div>
       <div class="d-row"><span>Fecha de entrega</span><span>${fmtDate(p.fechaEntrega)}</span></div>
       <div class="d-row"><span>Matrícula</span><span>${escapeHtml(p.matricula||"—")}</span></div>
       <div class="d-row"><span>N° de chofer</span><span>${escapeHtml(p.numeroChofer||"—")}</span></div>
       <div class="d-row"><span>Armado el</span><span>${fmtDateTime(p.fechaArmado)}</span></div>
     </div>
+    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:14px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
     <div class="field">
       <label>Productos finales</label>
-      ${itemsResumen(p.items)}
+      ${renderItemsBlock(p)}
     </div>
     <div class="field">
       <label>Aclaración del depósito</label>
@@ -742,7 +910,7 @@ window.verDetalleSenasa = function(id){
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
-      <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+      <button class="btn btn-primary" onclick="imprimirPedido('${p.id}')">Imprimir</button>
     </div>
   `);
 };
@@ -758,60 +926,126 @@ function itemRowHtml(idx){
   </div>`;
 }
 
+function addItemRow(containerId){
+  document.getElementById(containerId).insertAdjacentHTML("beforeend", itemRowHtml(itemRowIndex++));
+}
+function readItemsFrom(containerId){
+  return Array.from(document.querySelectorAll(`#${containerId} .item-row`)).map(row=>({
+    item: row.querySelector(".np-item").value.trim(),
+    cantidad: row.querySelector(".np-cant").value,
+    unidad: row.querySelector(".np-unidad").value.trim()
+  })).filter(it=>it.item);
+}
+
 document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
   itemRowIndex = 0;
+  numeroPedidoActual = siguienteNumeroPedido();
   openModal(`
     <h3>Nuevo pedido de salida</h3>
     <p class="modal-sub">Se enviará directamente al panel del depósito.</p>
     <form id="form-nuevo-pedido">
       <div class="row-2">
         <div class="field"><label>Empresa</label><input type="text" id="np-empresa" required></div>
-        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" required></div>
+        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" class="readonly-field" readonly value="${numeroPedidoActual}"></div>
       </div>
-      <div class="field"><label>Entidad (datos del cliente)</label><textarea id="np-entidad"></textarea></div>
+      <div class="row-2">
+        <div class="field"><label>Entidad (datos del cliente)</label><input type="text" id="np-entidad"></div>
+        <div class="field"><label>SPR</label><input type="text" id="np-spr" placeholder="Si corresponde"></div>
+      </div>
       <div class="row-2">
         <div class="field"><label>Fecha</label><input type="date" id="np-fecha" required></div>
         <div class="field"><label>Fecha de entrega</label><input type="date" id="np-fecha-entrega"></div>
       </div>
+
       <div class="field">
-        <label>Ítems</label>
-        <div class="items-repeater" id="np-items"></div>
-        <button type="button" class="add-row-btn" id="np-add-row">+ Agregar ítem</button>
+        <label>Tipo de pedido</label>
+        <div class="tipo-toggle">
+          <label class="tipo-opt active" data-val="normal"><input type="radio" name="np-tipo" value="normal" checked> Normal</label>
+          <label class="tipo-opt" data-val="eco"><input type="radio" name="np-tipo" value="eco"> Eco</label>
+        </div>
       </div>
+
+      <div id="np-bloque-normal">
+        <div class="field">
+          <label>Ítems</label>
+          <div class="items-repeater" id="np-items"></div>
+          <button type="button" class="add-row-btn" id="np-add-row">+ Agregar ítem</button>
+        </div>
+      </div>
+
+      <div id="np-bloque-eco" style="display:none;">
+        <div class="field">
+          <label>Remito</label>
+          <div class="items-repeater" id="np-items-remito"></div>
+          <button type="button" class="add-row-btn" id="np-add-row-remito">+ Agregar ítem</button>
+        </div>
+        <div class="field">
+          <label>Entrega</label>
+          <div class="items-repeater" id="np-items-entrega"></div>
+          <button type="button" class="add-row-btn" id="np-add-row-entrega">+ Agregar ítem</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Aclaraciones de oficina</label>
+        <textarea id="np-aclaracion-oficina" placeholder="Cualquier observación que deba ver el depósito"></textarea>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
         <button type="submit" class="btn btn-primary">Enviar pedido</button>
       </div>
     </form>
   `);
-  const itemsBox = document.getElementById("np-items");
-  itemsBox.insertAdjacentHTML("beforeend", itemRowHtml(itemRowIndex++));
-  document.getElementById("np-add-row").addEventListener("click", ()=>{
-    itemsBox.insertAdjacentHTML("beforeend", itemRowHtml(itemRowIndex++));
-  });
+
+  addItemRow("np-items");
+  addItemRow("np-items-remito");
+  addItemRow("np-items-entrega");
+  document.getElementById("np-add-row").addEventListener("click", ()=> addItemRow("np-items"));
+  document.getElementById("np-add-row-remito").addEventListener("click", ()=> addItemRow("np-items-remito"));
+  document.getElementById("np-add-row-entrega").addEventListener("click", ()=> addItemRow("np-items-entrega"));
   document.getElementById("np-fecha").valueAsDate = new Date();
+
+  document.querySelectorAll('input[name="np-tipo"]').forEach(r=>{
+    r.addEventListener("change", ()=>{
+      const val = document.querySelector('input[name="np-tipo"]:checked').value;
+      document.getElementById("np-bloque-normal").style.display = val === "normal" ? "block" : "none";
+      document.getElementById("np-bloque-eco").style.display = val === "eco" ? "block" : "none";
+      document.querySelectorAll(".tipo-opt").forEach(l=> l.classList.toggle("active", l.dataset.val === val));
+    });
+  });
 
   document.getElementById("form-nuevo-pedido").addEventListener("submit", e=>{
     e.preventDefault();
-    const items = Array.from(document.querySelectorAll("#np-items .item-row")).map(row=>({
-      item: row.querySelector(".np-item").value.trim(),
-      cantidad: row.querySelector(".np-cant").value,
-      unidad: row.querySelector(".np-unidad").value.trim()
-    })).filter(it=>it.item);
+    const tipo = document.querySelector('input[name="np-tipo"]:checked').value;
 
-    if(!items.length){ showToast("Agregá al menos un ítem."); return; }
-
-    db.collection("pedidos").add({
+    const payload = {
       empresa: document.getElementById("np-empresa").value.trim(),
+      numeroSPR: document.getElementById("np-spr").value.trim(),
       entidad: document.getElementById("np-entidad").value.trim(),
-      numeroPedido: document.getElementById("np-numero").value.trim(),
+      numeroPedido: numeroPedidoActual,
       fecha: document.getElementById("np-fecha").value,
       fechaEntrega: document.getElementById("np-fecha-entrega").value,
-      items,
+      tipoPedido: tipo,
+      aclaracionOficina: document.getElementById("np-aclaracion-oficina").value.trim(),
       estado: "pendiente",
       creadoPor: currentUser.label,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(()=>{
+    };
+
+    if(tipo === "eco"){
+      const itemsRemito = readItemsFrom("np-items-remito");
+      const itemsEntrega = readItemsFrom("np-items-entrega");
+      if(!itemsRemito.length && !itemsEntrega.length){ showToast("Agregá al menos un ítem en remito o en entrega."); return; }
+      payload.itemsRemito = itemsRemito;
+      payload.itemsEntrega = itemsEntrega;
+    } else {
+      const items = readItemsFrom("np-items");
+      if(!items.length){ showToast("Agregá al menos un ítem."); return; }
+      payload.items = items;
+    }
+
+    db.collection("pedidos").add(payload).then(()=>{
       showToast("Pedido enviado al depósito.");
       closeModal();
     }).catch(err=>{
@@ -828,7 +1062,8 @@ window.abrirArmarPedido = function(id){
   openModal(`
     <h3>Marcar pedido ${escapeHtml(p.numeroPedido)} como armado</h3>
     <p class="modal-sub">${escapeHtml(p.empresa)} — ${escapeHtml(p.entidad||"")}</p>
-    <div class="field"><label>Ítems del pedido</label>${itemsResumen(p.items)}</div>
+    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:14px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
+    <div class="field"><label>Ítems del pedido</label>${renderItemsBlock(p)}</div>
     <form id="form-armar-pedido">
       <div class="row-2">
         <div class="field"><label>Matrícula del vehículo</label><input type="text" id="ap-matricula" required></div>
@@ -839,6 +1074,7 @@ window.abrirArmarPedido = function(id){
         <textarea id="ap-aclaracion" placeholder="Opcional"></textarea>
       </div>
       <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="imprimirPedido('${p.id}')">Imprimir</button>
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
         <button type="submit" class="btn btn-primary">Confirmar armado y reservado</button>
       </div>
