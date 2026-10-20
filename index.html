@@ -38,12 +38,9 @@
     color:var(--ink);
     -webkit-font-smoothing:antialiased;
   }
-  button{font-family:inherit;}
-  input,select,textarea{font-family:inherit;}
-  a{color:var(--oficina);text-decoration:none;font-weight:600;}
-  a:hover{text-decoration:underline;}
+  button,input,select,textarea{font-family:inherit;}
 
-  #auth-screen{
+  #login-screen{
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -56,7 +53,7 @@
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:16px;
-    padding:36px 32px;
+    padding:32px;
     box-shadow:var(--shadow);
   }
   .login-card h1{
@@ -70,20 +67,40 @@
     color:var(--ink-soft);
     font-size:14px;
   }
-  .field{margin-bottom:16px;}
+  .auth-tabs{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    margin-bottom:20px;
+  }
+  .auth-tab-btn{
+    flex:1;
+    background:none;
+    border:none;
+    padding:8px;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink-faint);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .auth-tab-btn.active{
+    color:var(--oficina);
+    border-bottom-color:var(--oficina);
+  }
+  .field{margin-bottom:14px;}
   .field label{
     display:block;
-    font-size:13px;
+    font-size:12.5px;
     font-weight:600;
     color:var(--ink-soft);
-    margin-bottom:6px;
+    margin-bottom:5px;
   }
   .field select, .field input, .field textarea{
     width:100%;
-    padding:10px 12px;
+    padding:9px 12px;
     border:1px solid var(--line);
     border-radius:8px;
-    font-size:14.5px;
+    font-size:14px;
     color:var(--ink);
     background:var(--surface);
   }
@@ -100,8 +117,8 @@
     gap:6px;
     border:none;
     border-radius:8px;
-    padding:10px 18px;
-    font-size:14.5px;
+    padding:9px 16px;
+    font-size:14px;
     font-weight:600;
     cursor:pointer;
     transition:filter .12s ease, transform .05s ease;
@@ -114,32 +131,28 @@
   .btn-secondary:hover{filter:brightness(0.97);}
   .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
   .btn-danger{background:var(--alerta);color:#fff;}
-  .btn-sm{padding:6px 12px;font-size:13px;}
+  .btn-sm{padding:5px 10px;font-size:12.5px;}
   .auth-error{
     color:var(--alerta);
     font-size:13px;
-    margin-top:4px;
+    margin-top:10px;
     min-height:16px;
-  }
-  .auth-toggle{
-    text-align:center;
-    margin-top:20px;
-    font-size:13.5px;
   }
 
   #app-screen{display:none;min-height:100vh;}
   header.topbar{
     background:var(--surface);
     border-bottom:1px solid var(--line);
-    padding:14px 28px;
+    padding:12px 24px;
     display:flex;
     align-items:center;
     justify-content:space-between;
+    position:relative;
   }
   .brand{display:flex;align-items:center;gap:10px;}
   .brand .dot{width:10px;height:10px;border-radius:50%;}
   .brand h1{font-size:17px;font-weight:800;margin:0;letter-spacing:-0.01em;}
-  .who{display:flex;align-items:center;gap:14px;}
+  .who{display:flex;align-items:center;gap:12px;}
   .who .name{font-size:13.5px;font-weight:600;}
   .who .role-pill{
     font-size:11.5px;
@@ -150,86 +163,83 @@
   .role-oficina{background:var(--oficina-soft);color:var(--oficina);}
   .role-deposito{background:var(--deposito-soft);color:var(--deposito);}
 
-  .bell-container {
-    position: relative;
-    cursor: pointer;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--line-soft);
-    user-select: none;
+  .notif-wrapper{position:relative;}
+  .notif-btn{
+    background:none;
+    border:none;
+    font-size:18px;
+    cursor:pointer;
+    position:relative;
+    padding:6px;
+    border-radius:50%;
   }
-  .notif-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: var(--alerta);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 800;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .notif-btn:hover{background:var(--line-soft);}
+  .notif-badge{
+    position:absolute;
+    top:2px;
+    right:2px;
+    background:var(--alerta);
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
-  .notification-dropdown {
-    position: absolute;
-    top: 40px;
-    right: -10px;
-    width: 340px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    z-index: 100;
-    overflow: hidden;
+  .notif-dropdown{
+    display:none;
+    position:absolute;
+    right:0;
+    top:42px;
+    width:320px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    z-index:100;
+    max-height:380px;
+    overflow-y:auto;
   }
-  .notif-header {
-    background: var(--bg);
-    padding: 12px 16px;
-    font-weight: 700;
-    font-size: 13.5px;
-    border-bottom: 1px solid var(--line);
+  .notif-dropdown.open{display:block;}
+  .notif-header{
+    padding:12px 14px;
+    font-weight:700;
+    font-size:13px;
+    border-bottom:1px solid var(--line-soft);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
   }
-  .notif-item {
-    padding: 12px 16px;
-    font-size: 13px;
-    border-bottom: 1px solid var(--line-soft);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+  .notif-item{
+    padding:10px 14px;
+    border-bottom:1px solid var(--line-soft);
+    font-size:12.5px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
   }
-  .notif-item:last-child { border-bottom: none; }
-  .notif-empty { padding: 20px; text-align: center; color: var(--ink-faint); font-size: 13px; }
-  .notif-danger { border-left: 4px solid var(--alerta); background: var(--alerta-soft); }
-  .notif-ok { border-left: 4px solid var(--ok); background: var(--ok-soft); }
-  .notif-alert { border-left: 4px solid var(--pendiente); }
-  .notif-info { border-left: 4px solid var(--oficina); }
-  .btn-dismiss {
-    background: none;
-    border: none;
-    color: var(--ink-faint);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 4px;
-    border-radius: 4px;
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item.urgent{background:var(--alerta-soft);}
+  .notif-del{
+    background:none;
+    border:none;
+    color:var(--ink-faint);
+    cursor:pointer;
+    font-size:14px;
+    padding:0 4px;
   }
-  .btn-dismiss:hover { background: rgba(0,0,0,0.05); color: var(--ink); }
+  .notif-del:hover{color:var(--alerta);}
 
-  main{max-width:1080px;margin:0 auto;padding:26px 20px 60px;}
-
-  .tabs{display:flex;gap:4px;margin-bottom:22px;border-bottom:1px solid var(--line);}
+  main{max-width:1080px;margin:0 auto;padding:24px 16px 60px;}
+  .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--line);}
   .tab-btn{
     background:none;border:none;
     padding:10px 4px;
-    margin-right:22px;
+    margin-right:20px;
     font-size:14.5px;
     font-weight:600;
     color:var(--ink-faint);
@@ -248,13 +258,14 @@
     gap:10px;
   }
   .section-head h2{font-size:18px;margin:0;font-weight:700;}
-  .section-head .count{color:var(--ink-faint);font-weight:500;font-size:13.5px;margin-left:8px;}
+  .section-head .count{color:var(--ink-faint);font-weight:500;font-size:13.5px;margin-left:6px;}
 
   .card{
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
+    overflow:hidden;
   }
 
   table{width:100%;border-collapse:collapse;}
@@ -268,7 +279,7 @@
   }
   tbody td{
     padding:12px 14px;
-    font-size:13.8px;
+    font-size:13.5px;
     border-bottom:1px solid var(--line-soft);
     vertical-align:top;
   }
@@ -278,9 +289,9 @@
 
   .badge{
     display:inline-block;
-    font-size:12px;
+    font-size:11.5px;
     font-weight:700;
-    padding:3px 10px;
+    padding:2px 8px;
     border-radius:999px;
     white-space:nowrap;
   }
@@ -290,53 +301,48 @@
   .badge-eco{background:#EDE4F6;color:#6B3FA0;}
 
   .field input.readonly-field{background:var(--line-soft);color:var(--ink-soft);font-weight:700;}
-
   .tipo-toggle{display:flex;gap:10px;}
   .tipo-opt{
-    display:flex;align-items:center;gap:7px;
+    display:flex;align-items:center;gap:6px;
     border:1px solid var(--line);
-    padding:9px 16px;border-radius:8px;
-    font-size:13.5px;font-weight:600;color:var(--ink-soft);
+    padding:8px 14px;border-radius:8px;
+    font-size:13px;font-weight:600;color:var(--ink-soft);
     cursor:pointer;
   }
   .tipo-opt input{margin:0;}
   .tipo-opt.active{border-color:var(--oficina);color:var(--oficina);background:var(--oficina-soft);}
 
-  .eco-block{margin-bottom:8px;}
-  .eco-block > span{display:block;font-size:11.5px;font-weight:700;color:var(--ink-faint);margin-bottom:2px;}
-
+  .eco-block{margin-bottom:6px;}
+  .eco-block > span{display:block;font-size:11px;font-weight:700;color:var(--ink-faint);margin-bottom:2px;}
   .alerta-flag{
     color:var(--alerta);
     font-weight:700;
-    font-size:12px;
+    font-size:11.5px;
     display:flex;
     align-items:center;
-    gap:5px;
+    gap:4px;
     margin-top:4px;
   }
-  .alerta-flag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--alerta);display:inline-block;}
+  .alerta-flag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--alerta);display:inline-block;}
 
-  .row-nota-oficina td{padding-top:0;padding-bottom:12px;}
   .nota-oficina{
     background:#FFF4B8;
     border-left:3px solid #E0B400;
     color:#6B5300;
-    padding:9px 12px;
-    border-radius:0 7px 7px 0;
-    font-size:13px;
+    padding:8px 10px;
+    border-radius:0 6px 6px 0;
+    font-size:12.5px;
     line-height:1.4;
+    margin-top:4px;
   }
-  .nota-oficina strong{color:#8A6B00;}
-
   .muted{color:var(--ink-faint);}
   .empty-state{
-    padding:48px 20px;
+    padding:40px 20px;
     text-align:center;
     color:var(--ink-faint);
-    font-size:14px;
+    font-size:13.5px;
   }
-
-  .items-mini{font-size:12.8px;color:var(--ink-soft);}
+  .items-mini{font-size:12.5px;color:var(--ink-soft);}
   .items-mini div{padding:1px 0;}
 
   .modal-overlay{
@@ -354,35 +360,33 @@
     background:var(--surface);
     border-radius:14px;
     width:100%;
-    max-width:560px;
-    padding:28px 28px 24px;
+    max-width:540px;
+    padding:24px;
     box-shadow:0 20px 60px rgba(0,0,0,.25);
   }
   .modal h3{margin:0 0 4px;font-size:18px;font-weight:800;}
-  .modal p.modal-sub{margin:0 0 20px;color:var(--ink-soft);font-size:13.5px;}
+  .modal p.modal-sub{margin:0 0 18px;color:var(--ink-soft);font-size:13px;}
   .modal-actions{
-    display:flex;justify-content:flex-end;gap:10px;margin-top:22px;
-    padding-top:16px;border-top:1px solid var(--line-soft);
+    display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+    padding-top:14px;border-top:1px solid var(--line-soft);
   }
-  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .row-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;}
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
   .items-repeater .item-row{
     display:grid;grid-template-columns:2fr 1fr 1fr auto;
     gap:8px;margin-bottom:8px;align-items:center;
   }
-  .items-repeater .item-row input{padding:8px 10px;font-size:13.5px;}
+  .items-repeater .item-row input{padding:7px 9px;font-size:13px;}
   .row-remove{
     background:var(--line-soft);border:none;color:var(--ink-soft);
-    width:30px;height:34px;border-radius:7px;cursor:pointer;font-size:15px;
+    width:28px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;
   }
   .row-remove:hover{background:var(--alerta-soft);color:var(--alerta);}
   .add-row-btn{
     background:none;border:1px dashed var(--line);
     color:var(--ink-soft);
-    font-size:13px;font-weight:600;
-    padding:8px 12px;border-radius:7px;cursor:pointer;width:100%;
-    margin-top:2px;
+    font-size:12.5px;font-weight:600;
+    padding:7px 10px;border-radius:6px;cursor:pointer;width:100%;
   }
   .add-row-btn:hover{border-color:var(--oficina);color:var(--oficina);}
 
@@ -390,23 +394,22 @@
     background:var(--bg);
     border:1px solid var(--line);
     border-radius:8px;
-    padding:12px 14px;
-    margin-bottom:14px;
-    font-size:13.5px;
+    padding:10px 12px;
+    margin-bottom:12px;
+    font-size:13px;
   }
-  .detail-block .d-row{display:flex;justify-content:space-between;padding:3px 0;}
+  .detail-block .d-row{display:flex;justify-content:space-between;padding:2px 0;}
   .detail-block .d-row span:first-child{color:var(--ink-soft);}
   .detail-block .d-row span:last-child{font-weight:600;text-align:right;}
-
   .expand-link{
     background:none;border:none;color:var(--oficina);
-    font-weight:600;font-size:12.8px;cursor:pointer;padding:0;
+    font-weight:600;font-size:12.5px;cursor:pointer;padding:0;
   }
 
   #toast{
-    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
     background:var(--ink);color:#fff;
-    padding:12px 20px;border-radius:9px;font-size:13.8px;font-weight:600;
+    padding:10px 18px;border-radius:8px;font-size:13.5px;font-weight:600;
     box-shadow:0 8px 24px rgba(0,0,0,.25);
     opacity:0;pointer-events:none;
     transition:opacity .2s ease, transform .2s ease;
@@ -416,44 +419,42 @@
 
   @media (max-width:640px){
     .row-2{grid-template-columns:1fr;}
-    .row-3{grid-template-columns:1fr;}
-    main{padding:18px 12px 48px;}
+    main{padding:16px 10px 40px;}
     thead{display:none;}
-    tbody td{display:block;padding:6px 14px;}
+    tbody td{display:block;padding:6px 12px;}
     tbody tr{display:block;padding:10px 0;border-bottom:1px solid var(--line);}
-    tbody tr.row-alerta td:first-child{box-shadow:none;}
   }
 
   #print-area{display:none;}
   .nota-pedido{font-family:'Inter',system-ui,sans-serif;color:#000;}
   .nota-pedido .np-print-title{
-    text-align:center;font-size:22px;font-weight:800;
-    border:2px solid #000;padding:10px;margin:0;
+    text-align:center;font-size:20px;font-weight:800;
+    border:2px solid #000;padding:8px;margin:0;
   }
   .nota-pedido table{width:100%;border-collapse:collapse;}
-  .nota-pedido table.np-print-head td{border:1px solid #000;padding:5px 9px;font-size:12.5px;}
+  .nota-pedido table.np-print-head td{border:1px solid #000;padding:5px 8px;font-size:12px;}
   .nota-pedido .np-print-section{font-weight:800;text-align:left;}
   .nota-pedido .np-print-lbl{font-weight:700;}
   .nota-pedido .np-print-lbl.italic{font-style:italic;font-weight:400;}
   .nota-pedido .np-print-lbl.right{text-align:right;}
   .nota-pedido .np-print-val.bold{font-weight:700;}
-  .nota-pedido table.np-print-items{margin-top:14px;}
+  .nota-pedido table.np-print-items{margin-top:12px;}
   .nota-pedido table.np-print-items th, .nota-pedido table.np-print-items td{
-    border:1px solid #000;padding:5px 10px;font-size:12.5px;text-align:center;
+    border:1px solid #000;padding:5px 8px;font-size:12px;text-align:center;
   }
   .nota-pedido table.np-print-items th{font-weight:800;}
-  .nota-pedido .np-print-eco-row{display:flex;margin-top:14px;align-items:stretch;}
+  .nota-pedido .np-print-eco-row{display:flex;margin-top:12px;align-items:stretch;}
   .nota-pedido .np-print-eco-row table.np-print-items{margin-top:0;}
   .nota-pedido .np-print-eco-label{
-    width:85px;border:1px solid #000;border-right:none;
+    width:80px;border:1px solid #000;border-right:none;
     display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:12.5px;text-align:center;
+    font-weight:800;font-size:12px;text-align:center;
   }
-  .nota-pedido table.np-print-aclaracion{margin-top:14px;}
+  .nota-pedido table.np-print-aclaracion{margin-top:12px;}
   .nota-pedido table.np-print-aclaracion td{border:1px solid #000;}
-  .nota-pedido table.np-print-aclaracion td.np-print-section{padding:5px 9px;text-align:center;}
+  .nota-pedido table.np-print-aclaracion td.np-print-section{padding:4px 8px;text-align:center;}
   .nota-pedido table.np-print-aclaracion td.np-print-box{
-    border-top:none;height:90px;vertical-align:top;padding:8px;font-size:12.5px;
+    border-top:none;height:80px;vertical-align:top;padding:8px;font-size:12px;
   }
   .nota-pedido table.np-print-aclaracion td.np-print-box.highlight{background:#FFF200;}
 
@@ -466,64 +467,57 @@
 </head>
 <body>
 
-<div id="auth-screen">
-  
-  <div class="login-card" id="login-view">
+<div id="login-screen">
+  <div class="login-card">
     <h1>Gestión de Pedidos</h1>
-    <p class="sub">Ingresá con tu correo y contraseña.</p>
-    <form id="login-form">
+    <p class="sub">Acceso al sistema centralizado.</p>
+    
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="tab-login-btn">Iniciar Sesión</button>
+      <button class="auth-tab-btn" id="tab-register-btn">Registrarse</button>
+    </div>
+
+    <form id="form-auth-login">
       <div class="field">
-        <label>Correo Electrónico</label>
+        <label>Correo electrónico</label>
         <input type="email" id="login-email" required>
       </div>
       <div class="field">
         <label>Contraseña</label>
-        <input type="password" id="login-pass" required>
+        <input type="password" id="login-password" required>
       </div>
       <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
-      <div id="login-error" class="auth-error"></div>
     </form>
-    <div class="auth-toggle">
-      ¿No tenés usuario? <a href="#" id="go-to-register">Crear cuenta</a>
-    </div>
-  </div>
 
-  <div class="login-card" id="register-view" style="display:none;">
-    <h1>Crear Cuenta</h1>
-    <p class="sub">Registrá tu usuario en el sistema.</p>
-    <form id="register-form">
+    <form id="form-auth-register" style="display:none;">
       <div class="field">
-        <label>Nombre o Identificador (Ej: Mariano Moreno)</label>
-        <input type="text" id="reg-name" required>
+        <label>Nombre / Etiqueta del Usuario</label>
+        <input type="text" id="reg-name" placeholder="Ej: Administrativo, Moreno 3575" required>
       </div>
       <div class="field">
-        <label>Correo Electrónico</label>
-        <input type="email" id="reg-email" required>
-      </div>
-      <div class="field">
-        <label>Contraseña (Mínimo 6 caracteres)</label>
-        <input type="password" id="reg-pass" minlength="6" required>
-      </div>
-      <div class="field">
-        <label>Rol de Usuario</label>
+        <label>Tipo de Usuario</label>
         <select id="reg-role" required>
-          <option value="" disabled selected>Seleccioná un rol</option>
-          <option value="oficina">Oficina (Administrativo / Comprador)</option>
+          <option value="oficina">Oficina</option>
           <option value="deposito">Depósito</option>
         </select>
       </div>
       <div class="field">
-        <label>Código de Invitación</label>
-        <input type="text" id="reg-code" required>
+        <label>Correo electrónico</label>
+        <input type="email" id="reg-email" required>
       </div>
-      <button class="btn btn-primary btn-block" type="submit">Registrarse</button>
-      <div id="reg-error" class="auth-error"></div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" required>
+      </div>
+      <div class="field">
+        <label>Código de Invitación</label>
+        <input type="password" id="reg-invite" required>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Crear Cuenta</button>
     </form>
-    <div class="auth-toggle">
-      ¿Ya tenés cuenta? <a href="#" id="go-to-login">Ingresar</a>
-    </div>
-  </div>
 
+    <div class="auth-error" id="auth-error"></div>
+  </div>
 </div>
 
 <div id="app-screen">
@@ -533,10 +527,16 @@
       <h1>Gestión de Pedidos</h1>
     </div>
     <div class="who">
-      <div class="bell-container" id="bell-btn">
-        🔔<span class="notif-badge" id="notif-badge" style="display:none;">0</span>
-        <div class="notification-dropdown" id="notif-dropdown" style="display:none;">
-          <div class="notif-header">Notificaciones</div>
+      <div class="notif-wrapper">
+        <button class="notif-btn" id="notif-toggle">
+          🔔
+          <span class="notif-badge" id="notif-count" style="display:none;">0</span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-header">
+            <span>Notificaciones</span>
+            <button class="expand-link" id="notif-clear-all" style="font-size:11px;">Limpiar borradas</button>
+          </div>
           <div id="notif-list"></div>
         </div>
       </div>
@@ -561,7 +561,7 @@
         <div class="card">
           <table>
             <thead>
-              <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Estado</th><th></th></tr>
+              <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody id="of-pedidos-body"></tbody>
           </table>
@@ -576,7 +576,7 @@
         <div class="card">
           <table>
             <thead>
-              <tr><th>Solicitado por</th><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th></th></tr>
+              <tr><th>Solicitado por</th><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody id="of-solicitudes-body"></tbody>
           </table>
@@ -588,7 +588,7 @@
     <div id="view-deposito" style="display:none;">
       <div class="tabs role-deposito-mode">
         <button class="tab-btn active" data-tab="de-pedidos">Pedidos recibidos</button>
-        <button class="tab-btn" data-tab="de-solicitudes">Mis solicitudes</button>
+        <button class="tab-btn" data-tab="de-solicitudes">Solicitudes de depósito</button>
       </div>
 
       <div id="tab-de-pedidos">
@@ -598,20 +598,20 @@
         <div class="card">
           <table>
             <thead>
-              <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th></th></tr>
+              <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Acciones</th></tr>
             </thead>
             <tbody id="de-pendientes-body"></tbody>
           </table>
-          <div class="empty-state" id="de-pendientes-empty" style="display:none;">No hay pedidos pendientes. 🎉</div>
+          <div class="empty-state" id="de-pendientes-empty" style="display:none;">No hay pedidos pendientes.</div>
         </div>
 
-        <div class="section-head" style="margin-top:30px;">
+        <div class="section-head" style="margin-top:28px;">
           <h2>Reservados (historial) <span class="count" id="de-reservados-count"></span></h2>
         </div>
         <div class="card">
           <table>
             <thead>
-              <tr><th>N° Pedido</th><th>Empresa</th><th>Chofer / Matrícula</th><th>Aclaración</th><th>Armado</th><th></th></tr>
+              <tr><th>N° Pedido</th><th>Empresa</th><th>Chofer / Matrícula</th><th>Aclaración</th><th>Armado</th><th>Acciones</th></tr>
             </thead>
             <tbody id="de-reservados-body"></tbody>
           </table>
@@ -627,7 +627,7 @@
         <div class="card">
           <table>
             <thead>
-              <tr><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Respuesta de oficina</th></tr>
+              <tr><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Respuesta de oficina</th><th>Acciones</th></tr>
             </thead>
             <tbody id="de-solicitudes-body"></tbody>
           </table>
@@ -659,27 +659,23 @@ const firebaseConfig = {
   appId: "1:651221022885:web:bd0e5befa697d346ecf54c"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 const ULTIMO_NUMERO_REGISTRADO = 26;
+const INVITE_HASH = "QmVpcm80NTkxIQ==";
 
-let currentUser = null; 
+let currentUser = null;
 let pedidosCache = [];
 let solicitudesCache = [];
-let numeroPedidoActual = null;
-let dismissedNotifs = [];
+let dismissedNotifs = JSON.parse(localStorage.getItem("gp_dismissed_notifs") || "[]");
 
-function siguienteNumeroPedido(){
-  let max = ULTIMO_NUMERO_REGISTRADO;
-  pedidosCache.forEach(p=>{
-    const match = String(p.numeroPedido || "").match(/(\d+)/);
-    if(match){
-      const n = parseInt(match[1], 10);
-      if(!isNaN(n) && n > max) max = n;
-    }
-  });
-  return "PED-" + String(max + 1).padStart(4, "0");
+function checkInviteCode(input) {
+  try {
+    return btoa(input) === INVITE_HASH;
+  } catch(e) {
+    return false;
+  }
 }
 
 function escapeHtml(str){
@@ -687,22 +683,27 @@ function escapeHtml(str){
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
+
 function fmtDate(d){
   if(!d) return "—";
   const parts = String(d).split("-");
   if(parts.length===3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return d;
 }
+
 function fmtDateTime(ts){
   if(!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 }
-function isOverdue(pedido){
-  if(pedido.estado !== "pendiente" || !pedido.fecha) return false;
-  const base = new Date(pedido.fecha + "T00:00:00");
-  const diffHours = (Date.now() - base.getTime()) / 3600000;
-  return diffHours >= 48;
+
+function isUrgentOrOverdue(pedido){
+  if(pedido.estado !== "pendiente") return false;
+  const targetDate = pedido.fechaEntrega || pedido.fecha;
+  if(!targetDate) return false;
+  const base = new Date(targetDate + "T00:00:00");
+  const diffHours = (base.getTime() - Date.now()) / 3600000;
+  return diffHours <= 48;
 }
 
 function showToast(msg){
@@ -712,64 +713,71 @@ function showToast(msg){
   clearTimeout(showToast._t);
   showToast._t = setTimeout(()=> t.classList.remove("show"), 2600);
 }
+
 function closeModal(){
   document.getElementById("modal-overlay").classList.remove("open");
   document.getElementById("modal-content").innerHTML = "";
 }
+
 function openModal(html){
   document.getElementById("modal-content").innerHTML = html;
   document.getElementById("modal-overlay").classList.add("open");
 }
+
 document.getElementById("modal-overlay").addEventListener("click", e=>{
   if(e.target.id === "modal-overlay") closeModal();
 });
 
-document.getElementById("go-to-register").addEventListener("click", e=>{
-  e.preventDefault();
-  document.getElementById("login-view").style.display = "none";
-  document.getElementById("register-view").style.display = "block";
+document.getElementById("tab-login-btn").addEventListener("click", ()=>{
+  document.getElementById("tab-login-btn").classList.add("active");
+  document.getElementById("tab-register-btn").classList.remove("active");
+  document.getElementById("form-auth-login").style.display = "block";
+  document.getElementById("form-auth-register").style.display = "none";
+  document.getElementById("auth-error").textContent = "";
 });
 
-document.getElementById("go-to-login").addEventListener("click", e=>{
-  e.preventDefault();
-  document.getElementById("register-view").style.display = "none";
-  document.getElementById("login-view").style.display = "block";
+document.getElementById("tab-register-btn").addEventListener("click", ()=>{
+  document.getElementById("tab-register-btn").classList.add("active");
+  document.getElementById("tab-login-btn").classList.remove("active");
+  document.getElementById("form-auth-register").style.display = "block";
+  document.getElementById("form-auth-login").style.display = "none";
+  document.getElementById("auth-error").textContent = "";
 });
 
-document.getElementById("login-form").addEventListener("submit", e=>{
+document.getElementById("form-auth-login").addEventListener("submit", e=>{
   e.preventDefault();
   const email = document.getElementById("login-email").value.trim();
-  const pass = document.getElementById("login-pass").value;
-  const errEl = document.getElementById("login-error");
-  errEl.textContent = "Ingresando...";
+  const pass = document.getElementById("login-password").value;
+  const errEl = document.getElementById("auth-error");
+  errEl.textContent = "";
 
-  auth.signInWithEmailAndPassword(email, pass).catch(err => {
-    errEl.textContent = "Error: Correo o contraseña incorrectos.";
+  auth.signInWithEmailAndPassword(email, pass).catch(err=>{
+    errEl.textContent = "Error al iniciar sesión: Datos incorrectos o usuario inexistente.";
   });
 });
 
-document.getElementById("register-form").addEventListener("submit", e=>{
+document.getElementById("form-auth-register").addEventListener("submit", e=>{
   e.preventDefault();
   const name = document.getElementById("reg-name").value.trim();
-  const email = document.getElementById("reg-email").value.trim();
-  const pass = document.getElementById("reg-pass").value;
   const role = document.getElementById("reg-role").value;
-  const code = document.getElementById("reg-code").value.trim();
-  const errEl = document.getElementById("reg-error");
+  const email = document.getElementById("reg-email").value.trim();
+  const pass = document.getElementById("reg-password").value;
+  const invite = document.getElementById("reg-invite").value;
+  const errEl = document.getElementById("auth-error");
+  errEl.textContent = "";
 
-  const validKey = btoa(code.split('').reverse().join(''));
-  if(validKey !== "ITE5NTRvcmllQg=="){
-    errEl.textContent = "Código de invitación inválido.";
+  if(!checkInviteCode(invite)){
+    errEl.textContent = "Código de invitación incorrecto.";
     return;
   }
 
-  errEl.textContent = "Creando cuenta...";
-  auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+  auth.createUserWithEmailAndPassword(email, pass).then(cred=>{
     return db.collection("users").doc(cred.user.uid).set({
       label: name,
-      rol: role
+      rol: role,
+      email: email
     });
-  }).catch(err => {
+  }).catch(err=>{
     errEl.textContent = "Error al registrarse: " + err.message;
   });
 });
@@ -778,35 +786,28 @@ document.getElementById("logout-btn").addEventListener("click", ()=>{
   auth.signOut();
 });
 
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(user=>{
   if(user){
-    db.collection("users").doc(user.uid).get().then(doc => {
+    db.collection("users").doc(user.uid).get().then(doc=>{
       if(doc.exists){
-        currentUser = { uid: user.uid, label: doc.data().label, rol: doc.data().rol };
-        loadDismissedNotifs();
+        const userData = doc.data();
+        currentUser = { uid: user.uid, label: userData.label, rol: userData.rol };
         startApp();
       } else {
         auth.signOut();
       }
-    }).catch(err => {
-      console.error(err);
-      auth.signOut();
     });
   } else {
     currentUser = null;
     if(unsubPedidos) unsubPedidos();
     if(unsubSolicitudes) unsubSolicitudes();
     document.getElementById("app-screen").style.display = "none";
-    document.getElementById("auth-screen").style.display = "flex";
-    document.getElementById("login-form").reset();
-    document.getElementById("register-form").reset();
-    document.getElementById("login-error").textContent = "";
-    document.getElementById("reg-error").textContent = "";
+    document.getElementById("login-screen").style.display = "flex";
   }
 });
 
 function startApp(){
-  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("who-name").textContent = currentUser.label;
   const roleEl = document.getElementById("who-role");
@@ -819,86 +820,6 @@ function startApp(){
 
   listenPedidos();
   listenSolicitudes();
-}
-
-function loadDismissedNotifs(){
-  if(!currentUser) return;
-  try {
-    const raw = localStorage.getItem("gp_notifs_" + currentUser.uid);
-    if(raw) dismissedNotifs = JSON.parse(raw);
-  } catch(e) {}
-}
-
-window.dismissNotif = function(key){
-  if(!dismissedNotifs.includes(key)) {
-    dismissedNotifs.push(key);
-    localStorage.setItem("gp_notifs_" + currentUser.uid, JSON.stringify(dismissedNotifs));
-  }
-  updateNotifications();
-};
-
-document.getElementById("bell-btn").addEventListener("click", (e) => {
-  e.stopPropagation();
-  const dropdown = document.getElementById("notif-dropdown");
-  dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
-});
-
-document.addEventListener("click", (e) => {
-  if(!e.target.closest("#bell-btn")) {
-    document.getElementById("notif-dropdown").style.display = "none";
-  }
-});
-
-function updateNotifications() {
-  if (!currentUser) return;
-  const list = document.getElementById("notif-list");
-  const badge = document.getElementById("notif-badge");
-  let items = [];
-
-  if (currentUser.rol === "oficina") {
-    const reservas = pedidosCache.filter(p => p.estado === "reservado");
-    const solics = solicitudesCache.filter(s => s.estado === "pendiente");
-    reservas.forEach(p => {
-      const key = "ok_" + p.id;
-      if(!dismissedNotifs.includes(key)) items.push({key, text: `Pedido ${p.numeroPedido} armado y listo`, type: 'ok'});
-    });
-    solics.forEach(s => {
-      const key = "sol_" + s.id;
-      if(!dismissedNotifs.includes(key)) items.push({key, text: `Nueva solicitud de insumos de ${s.solicitadoPor}`, type: 'alert'});
-    });
-  } else {
-    const pendientes = pedidosCache.filter(p => p.estado === "pendiente");
-    const solConfirmadas = solicitudesCache.filter(s => s.estado === "confirmada");
-    
-    pendientes.forEach(p => {
-      const overdue = isOverdue(p);
-      if (overdue) {
-        const key = "vencido_" + p.id;
-        if(!dismissedNotifs.includes(key)) items.push({key, text: `VENCIDO: Armar pedido ${p.numeroPedido}`, type: 'danger'});
-      } else {
-        const key = "nuevo_" + p.id;
-        if(!dismissedNotifs.includes(key)) items.push({key, text: `Nuevo pedido de salida: ${p.numeroPedido}`, type: 'info'});
-      }
-    });
-
-    solConfirmadas.forEach(s => {
-      const key = "llegada_" + s.id;
-      if(!dismissedNotifs.includes(key)) items.push({key, text: `Solicitud de insumos confirmada (Llega ${fmtDate(s.fechaLlegada)})`, type: 'ok'});
-    });
-  }
-
-  badge.textContent = items.length;
-  badge.style.display = items.length > 0 ? "flex" : "none";
-  if (items.length === 0) {
-    list.innerHTML = '<div class="notif-empty">No hay notificaciones nuevas</div>';
-  } else {
-    list.innerHTML = items.map(i => `
-      <div class="notif-item notif-${i.type}">
-        <span>${escapeHtml(i.text)}</span>
-        <button class="btn-dismiss" onclick="dismissNotif('${i.key}')">✕</button>
-      </div>
-    `).join("");
-  }
 }
 
 document.querySelectorAll(".tab-btn").forEach(btn=>{
@@ -924,11 +845,9 @@ function listenPedidos(){
       pedidosCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderPedidos();
       updateNotifications();
-    }, err=>{
-      console.error(err);
-      showToast("Error leyendo pedidos.");
     });
 }
+
 function listenSolicitudes(){
   if(unsubSolicitudes) unsubSolicitudes();
   unsubSolicitudes = db.collection("solicitudes").orderBy("createdAt","desc")
@@ -936,11 +855,109 @@ function listenSolicitudes(){
       solicitudesCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderSolicitudes();
       updateNotifications();
-    }, err=>{
-      console.error(err);
-      showToast("Error leyendo solicitudes.");
     });
 }
+
+document.getElementById("notif-toggle").addEventListener("click", (e)=>{
+  e.stopPropagation();
+  document.getElementById("notif-dropdown").classList.toggle("open");
+});
+
+document.addEventListener("click", ()=>{
+  document.getElementById("notif-dropdown").classList.remove("open");
+});
+
+document.getElementById("notif-dropdown").addEventListener("click", e=>e.stopPropagation());
+
+document.getElementById("notif-clear-all").addEventListener("click", ()=>{
+  dismissedNotifs = [];
+  localStorage.removeItem("gp_dismissed_notifs");
+  updateNotifications();
+});
+
+function updateNotifications(){
+  if(!currentUser) return;
+  const listEl = document.getElementById("notif-list");
+  const badgeEl = document.getElementById("notif-count");
+  let notifs = [];
+
+  if(currentUser.rol === "deposito"){
+    pedidosCache.filter(p => p.estado === "pendiente").forEach(p => {
+      const urgent = isUrgentOrOverdue(p);
+      const id = "p_urg_" + p.id;
+      if(urgent && !dismissedNotifs.includes(id)){
+        notifs.push({
+          id,
+          urgent: true,
+          text: `<b>Urgente:</b> Pedido ${p.numeroPedido} vence pronto (${fmtDate(p.fechaEntrega || p.fecha)})`
+        });
+      } else if(!dismissedNotifs.includes("p_new_" + p.id)) {
+        notifs.push({
+          id: "p_new_" + p.id,
+          urgent: false,
+          text: `Nuevo pedido de salida recibido: ${p.numeroPedido}`
+        });
+      }
+    });
+
+    solicitudesCache.filter(s => s.estado === "confirmada").forEach(s => {
+      const id = "s_conf_" + s.id;
+      if(!dismissedNotifs.includes(id)){
+        notifs.push({
+          id,
+          urgent: false,
+          text: `Solicitud de insumos confirmada. Llega el ${fmtDate(s.fechaLlegada)}`
+        });
+      }
+    });
+  }
+
+  if(currentUser.rol === "oficina"){
+    pedidosCache.filter(p => p.estado === "reservado").forEach(p => {
+      const id = "p_res_" + p.id;
+      if(!dismissedNotifs.includes(id)){
+        notifs.push({
+          id,
+          urgent: false,
+          text: `Pedido ${p.numeroPedido} armado y reservado por depósito.`
+        });
+      }
+    });
+
+    solicitudesCache.filter(s => s.estado === "pendiente").forEach(s => {
+      const id = "s_pend_" + s.id;
+      if(!dismissedNotifs.includes(id)){
+        notifs.push({
+          id,
+          urgent: true,
+          text: `<b>Nueva solicitud:</b> ${s.solicitadoPor} requiere insumos.`
+        });
+      }
+    });
+  }
+
+  if(!notifs.length){
+    listEl.innerHTML = `<div class="empty-state" style="padding:16px;">Sin notificaciones nuevas.</div>`;
+    badgeEl.style.display = "none";
+  } else {
+    badgeEl.style.display = "flex";
+    badgeEl.textContent = notifs.length;
+    listEl.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.urgent ? 'urgent' : ''}">
+        <div>${n.text}</div>
+        <button class="notif-del" onclick="dismissNotif('${n.id}')">✕</button>
+      </div>
+    `).join("");
+  }
+}
+
+window.dismissNotif = function(id){
+  if(!dismissedNotifs.includes(id)){
+    dismissedNotifs.push(id);
+    localStorage.setItem("gp_dismissed_notifs", JSON.stringify(dismissedNotifs));
+    updateNotifications();
+  }
+};
 
 function itemsResumen(items){
   if(!items || !items.length) return '<span class="muted">—</span>';
@@ -979,7 +996,7 @@ function renderPedidosOficina(){
       ? `<button class="expand-link" onclick="verDetalleSenasa('${p.id}')">Ver datos SENASA</button><br>`
       : "";
     return `<tr>
-      <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${p.numeroSPR ? `<div class="muted" style="font-size:11.5px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
+      <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${p.numeroSPR ? `<div class="muted" style="font-size:11px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
       <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
       <td>${fmtDate(p.fecha)}</td>
       <td>${fmtDate(p.fechaEntrega)}</td>
@@ -992,7 +1009,7 @@ function renderPedidosOficina(){
 
 function renderPedidosDeposito(){
   const pendientes = pedidosCache.filter(p=>p.estado==="pendiente")
-    .sort((a,b)=> (a.fecha||"").localeCompare(b.fecha||""));
+    .sort((a,b)=> (a.fechaEntrega||a.fecha||"").localeCompare(b.fechaEntrega||b.fecha||""));
   const reservados = pedidosCache.filter(p=>p.estado==="reservado")
     .sort((a,b)=>{
       const ta = a.fechaArmado && a.fechaArmado.toMillis ? a.fechaArmado.toMillis() : 0;
@@ -1007,17 +1024,17 @@ function renderPedidosDeposito(){
   else{
     pEmpty.style.display="none";
     pBody.innerHTML = pendientes.map(p=>{
-      const overdue = isOverdue(p);
+      const overdue = isUrgentOrOverdue(p);
       const ecoBadge = p.tipoPedido === "eco" ? '<span class="badge badge-eco">Eco</span>' : "";
       return `<tr class="${overdue ? "row-alerta":""}">
-        <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${overdue ? '<div class="alerta-flag">Vencido (48hs+)</div>' : ""}${p.numeroSPR ? `<div class="muted" style="font-size:11.5px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
+        <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${overdue ? '<div class="alerta-flag">Urgente (-48hs)</div>' : ""}${p.numeroSPR ? `<div class="muted" style="font-size:11px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
         <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
         <td>${fmtDate(p.fecha)}</td>
         <td>${fmtDate(p.fechaEntrega)}</td>
         <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">Marcar armado y reservado</button><br>
-          <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="imprimirPedido('${p.id}')">Imprimir</button>
+          <button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">Armado y reservado</button><br>
+          <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="imprimirPedido('${p.id}')">Imprimir</button>
         </td>
       </tr>`;
     }).join("");
@@ -1071,21 +1088,16 @@ window.imprimirPedido = function(id){
     const rows = (items||[]).map(it=>
       `<tr><td>${escapeHtml(it.item)}</td><td>${escapeHtml(it.cantidad)}</td><td>${escapeHtml(it.unidad||"")}</td></tr>`
     ).join("");
-    const blanks = `<tr><td>&nbsp;</td><td></td><td></td></tr>`.repeat(2);
     return `<table class="np-print-items">
       <thead><tr><th>ITEM</th><th>CANTIDAD</th><th>UNIDAD</th></tr></thead>
-      <tbody>${rows}${blanks}</tbody>
+      <tbody>${rows}</tbody>
     </table>`;
   }
 
-  let itemsHtml;
-  if(p.tipoPedido === "eco"){
-    itemsHtml = `
-      <div class="np-print-eco-row"><div class="np-print-eco-label">REMITO</div>${itemsTable(p.itemsRemito)}</div>
-      <div class="np-print-eco-row"><div class="np-print-eco-label">ENTREGA</div>${itemsTable(p.itemsEntrega)}</div>`;
-  } else {
-    itemsHtml = itemsTable(p.items);
-  }
+  let itemsHtml = (p.tipoPedido === "eco") 
+    ? `<div class="np-print-eco-row"><div class="np-print-eco-label">REMITO</div>${itemsTable(p.itemsRemito)}</div>
+       <div class="np-print-eco-row"><div class="np-print-eco-label">ENTREGA</div>${itemsTable(p.itemsEntrega)}</div>`
+    : itemsTable(p.items);
 
   const aclaracionHtml = `
     <table class="np-print-aclaracion">
@@ -1104,12 +1116,58 @@ window.imprimirPedido = function(id){
   window.print();
 };
 
+window.imprimirSolicitud = function(id){
+  const s = solicitudesCache.find(x=>x.id===id);
+  if(!s) return;
+
+  const prodsHtml = (s.productos||[]).map(p=>
+    `<tr><td>${escapeHtml(p.producto)}</td><td>${escapeHtml(p.cantidad)}</td></tr>`
+  ).join("");
+
+  document.getElementById("print-area").innerHTML = `
+    <div class="nota-pedido">
+      <div class="np-print-title">SOLICITUD DE MERCADERÍA / INSUMOS</div>
+      <table class="np-print-head" style="margin-top:14px;">
+        <tr>
+          <td class="np-print-lbl">SOLICITADO POR:</td>
+          <td>${escapeHtml(s.solicitadoPor||"")}</td>
+          <td class="np-print-lbl right">ESTADO:</td>
+          <td class="np-print-val bold">${escapeHtml((s.estado||"").toUpperCase())}</td>
+        </tr>
+        <tr>
+          <td class="np-print-lbl">FECHA ENT. DESEADA:</td>
+          <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+          <td class="np-print-lbl right">FECHA LLEGADA:</td>
+          <td class="np-print-val bold">${fmtDate(s.fechaLlegada)}</td>
+        </tr>
+      </table>
+      <table class="np-print-items" style="margin-top:14px;">
+        <thead><tr><th>PRODUCTO / INSUMO</th><th>CANTIDAD</th></tr></thead>
+        <tbody>${prodsHtml}</tbody>
+      </table>
+      ${s.aclaracion ? `
+        <table class="np-print-aclaracion" style="margin-top:14px;">
+          <tr><td class="np-print-section">ACLARACIÓN DEL DEPÓSITO</td></tr>
+          <tr><td class="np-print-box">${escapeHtml(s.aclaracion)}</td></tr>
+        </table>
+      ` : ""}
+      ${s.productosFinales ? `
+        <table class="np-print-aclaracion" style="margin-top:14px;">
+          <tr><td class="np-print-section">RESPUESTA DE COMPRAS / OFICINA</td></tr>
+          <tr><td class="np-print-box highlight">${escapeHtml(s.productosFinales)}</td></tr>
+        </table>
+      ` : ""}
+    </div>`;
+
+  window.print();
+};
+
 window.verDetalleSenasa = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
   openModal(`
     <h3>Pedido ${escapeHtml(p.numeroPedido)}</h3>
-    <p class="modal-sub">Datos confirmados por depósito para el trámite de SENASA.</p>
+    <p class="modal-sub">Datos confirmados por depósito para SENASA.</p>
     <div class="detail-block">
       <div class="d-row"><span>Empresa</span><span>${escapeHtml(p.empresa)}</span></div>
       <div class="d-row"><span>Entidad</span><span>${escapeHtml(p.entidad||"—")}</span></div>
@@ -1120,7 +1178,7 @@ window.verDetalleSenasa = function(id){
       <div class="d-row"><span>N° de chofer</span><span>${escapeHtml(p.numeroChofer||"—")}</span></div>
       <div class="d-row"><span>Armado el</span><span>${fmtDateTime(p.fechaArmado)}</span></div>
     </div>
-    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:14px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
+    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:12px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
     <div class="field">
       <label>Productos finales</label>
       ${renderItemsBlock(p)}
@@ -1149,6 +1207,7 @@ function itemRowHtml(idx){
 function addItemRow(containerId){
   document.getElementById(containerId).insertAdjacentHTML("beforeend", itemRowHtml(itemRowIndex++));
 }
+
 function readItemsFrom(containerId){
   return Array.from(document.querySelectorAll(`#${containerId} .item-row`)).map(row=>({
     item: row.querySelector(".np-item").value.trim(),
@@ -1157,16 +1216,28 @@ function readItemsFrom(containerId){
   })).filter(it=>it.item);
 }
 
+function siguienteNumeroPedido(){
+  let max = ULTIMO_NUMERO_REGISTRADO;
+  pedidosCache.forEach(p=>{
+    const match = String(p.numeroPedido || "").match(/(\d+)/);
+    if(match){
+      const n = parseInt(match[1], 10);
+      if(!isNaN(n) && n > max) max = n;
+    }
+  });
+  return "PED-" + String(max + 1).padStart(4, "0");
+}
+
 document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
   itemRowIndex = 0;
-  numeroPedidoActual = siguienteNumeroPedido();
+  const numActual = siguienteNumeroPedido();
   openModal(`
     <h3>Nuevo pedido de salida</h3>
     <p class="modal-sub">Se enviará directamente al panel del depósito.</p>
     <form id="form-nuevo-pedido">
       <div class="row-2">
         <div class="field"><label>Empresa</label><input type="text" id="np-empresa" required></div>
-        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" class="readonly-field" readonly value="${numeroPedidoActual}"></div>
+        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" class="readonly-field" readonly value="${numActual}"></div>
       </div>
       <div class="row-2">
         <div class="field"><label>Entidad (datos del cliente)</label><input type="text" id="np-entidad"></div>
@@ -1226,11 +1297,19 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
   document.getElementById("np-add-row-entrega").addEventListener("click", ()=> addItemRow("np-items-entrega"));
   document.getElementById("np-fecha").valueAsDate = new Date();
 
+  const bNormal = document.getElementById("np-bloque-normal");
+  const bEco = document.getElementById("np-bloque-eco");
+  bEco.querySelectorAll("input").forEach(inp => inp.disabled = true);
+
   document.querySelectorAll('input[name="np-tipo"]').forEach(r=>{
     r.addEventListener("change", ()=>{
       const val = document.querySelector('input[name="np-tipo"]:checked').value;
-      document.getElementById("np-bloque-normal").style.display = val === "normal" ? "block" : "none";
-      document.getElementById("np-bloque-eco").style.display = val === "eco" ? "block" : "none";
+      bNormal.style.display = val === "normal" ? "block" : "none";
+      bEco.style.display = val === "eco" ? "block" : "none";
+
+      bNormal.querySelectorAll("input").forEach(inp => inp.disabled = (val === "eco"));
+      bEco.querySelectorAll("input").forEach(inp => inp.disabled = (val === "normal"));
+
       document.querySelectorAll(".tipo-opt").forEach(l=> l.classList.toggle("active", l.dataset.val === val));
     });
   });
@@ -1243,7 +1322,7 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
       empresa: document.getElementById("np-empresa").value.trim(),
       numeroSPR: document.getElementById("np-spr").value.trim(),
       entidad: document.getElementById("np-entidad").value.trim(),
-      numeroPedido: numeroPedidoActual,
+      numeroPedido: numActual,
       fecha: document.getElementById("np-fecha").value,
       fechaEntrega: document.getElementById("np-fecha-entrega").value,
       tipoPedido: tipo,
@@ -1256,7 +1335,7 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
     if(tipo === "eco"){
       const itemsRemito = readItemsFrom("np-items-remito");
       const itemsEntrega = readItemsFrom("np-items-entrega");
-      if(!itemsRemito.length && !itemsEntrega.length){ showToast("Agregá al menos un ítem en remito o en entrega."); return; }
+      if(!itemsRemito.length && !itemsEntrega.length){ showToast("Agregá al menos un ítem."); return; }
       payload.itemsRemito = itemsRemito;
       payload.itemsEntrega = itemsEntrega;
     } else {
@@ -1269,7 +1348,6 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
       showToast("Pedido enviado al depósito.");
       closeModal();
     }).catch(err=>{
-      console.error(err);
       showToast("No se pudo guardar el pedido.");
     });
   });
@@ -1281,7 +1359,7 @@ window.abrirArmarPedido = function(id){
   openModal(`
     <h3>Marcar pedido ${escapeHtml(p.numeroPedido)} como armado</h3>
     <p class="modal-sub">${escapeHtml(p.empresa)} — ${escapeHtml(p.entidad||"")}</p>
-    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:14px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
+    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:12px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
     <div class="field"><label>Ítems del pedido</label>${renderItemsBlock(p)}</div>
     <form id="form-armar-pedido">
       <div class="row-2">
@@ -1312,7 +1390,6 @@ window.abrirArmarPedido = function(id){
       showToast("Pedido marcado como armado y reservado.");
       closeModal();
     }).catch(err=>{
-      console.error(err);
       showToast("No se pudo actualizar el pedido.");
     });
   });
@@ -1350,13 +1427,16 @@ function renderSolicitudesOficina(){
       <td>${productosResumen(s.productos)}${s.aclaracion ? `<div class="muted" style="margin-top:4px;">${escapeHtml(s.aclaracion)}</div>`:""}</td>
       <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
       <td>${badge}</td>
-      <td>${accion}</td>
+      <td>
+        ${accion}
+        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="imprimirSolicitud('${s.id}')">Imprimir</button>
+      </td>
     </tr>`;
   }).join("");
 }
 
 function renderSolicitudesDeposito(){
-  const mias = solicitudesCache; 
+  const mias = solicitudesCache;
   const body = document.getElementById("de-solicitudes-body");
   const empty = document.getElementById("de-solicitudes-empty");
   document.getElementById("de-solicitudes-count").textContent = mias.length ? `(${mias.length})` : "";
@@ -1375,6 +1455,7 @@ function renderSolicitudesDeposito(){
       <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
       <td>${badge}</td>
       <td>${respuesta}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="imprimirSolicitud('${s.id}')">Imprimir</button></td>
     </tr>`;
   }).join("");
 }
@@ -1433,7 +1514,6 @@ document.getElementById("btn-nueva-solicitud").addEventListener("click", ()=>{
       showToast("Solicitud enviada a oficina.");
       closeModal();
     }).catch(err=>{
-      console.error(err);
       showToast("No se pudo guardar la solicitud.");
     });
   });
@@ -1467,16 +1547,13 @@ window.abrirGestionarSolicitud = function(id){
       fechaLlegada: document.getElementById("gs-llegada").value,
       gestionadoPor: currentUser.label
     }).then(()=>{
-      showToast("Solicitud confirmada. El depósito ya puede verla.");
+      showToast("Solicitud confirmada.");
       closeModal();
     }).catch(err=>{
-      console.error(err);
       showToast("No se pudo actualizar la solicitud.");
     });
   });
 };
-
-setInterval(()=>{ if(currentUser && currentUser.rol==="deposito") renderPedidosDeposito(); }, 60000);
 </script>
 </body>
 </html>
