@@ -535,7 +535,7 @@
         <div class="notif-dropdown" id="notif-dropdown">
           <div class="notif-header">
             <span>Notificaciones</span>
-            <button class="expand-link" id="notif-clear-all" style="font-size:11px;">Limpiar borradas</button>
+            <button class="expand-link" id="notif-clear-all" style="font-size:11px;">Borrar todas</button>
           </div>
           <div id="notif-list"></div>
         </div>
@@ -669,6 +669,7 @@ let currentUser = null;
 let pedidosCache = [];
 let solicitudesCache = [];
 let dismissedNotifs = JSON.parse(localStorage.getItem("gp_dismissed_notifs") || "[]");
+let activeNotifIds = []; 
 
 function checkInviteCode(input) {
   try {
@@ -697,9 +698,9 @@ function fmtDateTime(ts){
   return d.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 }
 
-function isUrgentOrOverdue(pedido){
-  if(pedido.estado !== "pendiente") return false;
-  const targetDate = pedido.fechaEntrega || pedido.fecha;
+function isUrgentOrOverdue(item){
+  if(item.estado !== "pendiente") return false;
+  const targetDate = item.fechaEntrega || item.fechaEntregaSolicitada || item.fecha;
   if(!targetDate) return false;
   const base = new Date(targetDate + "T00:00:00");
   const diffHours = (base.getTime() - Date.now()) / 3600000;
@@ -870,8 +871,10 @@ document.addEventListener("click", ()=>{
 document.getElementById("notif-dropdown").addEventListener("click", e=>e.stopPropagation());
 
 document.getElementById("notif-clear-all").addEventListener("click", ()=>{
-  dismissedNotifs = [];
-  localStorage.removeItem("gp_dismissed_notifs");
+  activeNotifIds.forEach(id => {
+    if(!dismissedNotifs.includes(id)) dismissedNotifs.push(id);
+  });
+  localStorage.setItem("gp_dismissed_notifs", JSON.stringify(dismissedNotifs));
   updateNotifications();
 });
 
@@ -925,16 +928,19 @@ function updateNotifications(){
     });
 
     solicitudesCache.filter(s => s.estado === "pendiente").forEach(s => {
+      const urgent = isUrgentOrOverdue(s);
       const id = "s_pend_" + s.id;
       if(!dismissedNotifs.includes(id)){
         notifs.push({
           id,
-          urgent: true,
-          text: `<b>Nueva solicitud:</b> ${s.solicitadoPor} requiere insumos.`
+          urgent: urgent,
+          text: `<b>${urgent ? 'Urgente: ' : 'Nueva solicitud: '}</b>${s.solicitadoPor} requiere insumos.`
         });
       }
     });
   }
+
+  activeNotifIds = notifs.map(n => n.id);
 
   if(!notifs.length){
     listEl.innerHTML = `<div class="empty-state" style="padding:16px;">Sin notificaciones nuevas.</div>`;
@@ -1416,14 +1422,19 @@ function renderSolicitudesOficina(){
   empty.style.display="none";
 
   body.innerHTML = solicitudesCache.map(s=>{
+    const overdue = isUrgentOrOverdue(s);
     const badge = s.estado === "confirmada"
       ? '<span class="badge badge-confirmada">Confirmada</span>'
       : '<span class="badge badge-pendiente">Pendiente</span>';
     const accion = s.estado === "pendiente"
       ? `<button class="btn btn-primary btn-sm" onclick="abrirGestionarSolicitud('${s.id}')">Gestionar compra</button>`
       : `<span class="muted">Llega: ${fmtDate(s.fechaLlegada)}</span>`;
-    return `<tr>
-      <td><strong>${escapeHtml(s.solicitadoPor)}</strong><br><span class="muted">${fmtDate(s.fechaEntregaSolicitada)} solicitado</span></td>
+    return `<tr class="${overdue ? "row-alerta":""}">
+      <td>
+        <strong>${escapeHtml(s.solicitadoPor)}</strong><br>
+        <span class="muted">${fmtDate(s.fechaEntregaSolicitada)} solicitado</span>
+        ${overdue ? '<div class="alerta-flag">Urgente (-48hs)</div>' : ""}
+      </td>
       <td>${productosResumen(s.productos)}${s.aclaracion ? `<div class="muted" style="margin-top:4px;">${escapeHtml(s.aclaracion)}</div>`:""}</td>
       <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
       <td>${badge}</td>
