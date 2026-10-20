@@ -40,9 +40,10 @@
   }
   button{font-family:inherit;}
   input,select,textarea{font-family:inherit;}
+  a{color:var(--oficina);text-decoration:none;font-weight:600;}
+  a:hover{text-decoration:underline;}
 
-  /* ---------- Login ---------- */
-  #login-screen{
+  #auth-screen{
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -51,7 +52,7 @@
   }
   .login-card{
     width:100%;
-    max-width:380px;
+    max-width:400px;
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:16px;
@@ -65,7 +66,7 @@
     letter-spacing:-0.01em;
   }
   .login-card p.sub{
-    margin:0 0 28px;
+    margin:0 0 24px;
     color:var(--ink-soft);
     font-size:14px;
   }
@@ -114,14 +115,18 @@
   .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
   .btn-danger{background:var(--alerta);color:#fff;}
   .btn-sm{padding:6px 12px;font-size:13px;}
-  #login-error{
+  .auth-error{
     color:var(--alerta);
     font-size:13px;
     margin-top:4px;
     min-height:16px;
   }
+  .auth-toggle{
+    text-align:center;
+    margin-top:20px;
+    font-size:13.5px;
+  }
 
-  /* ---------- App shell ---------- */
   #app-screen{display:none;min-height:100vh;}
   header.topbar{
     background:var(--surface);
@@ -132,9 +137,7 @@
     justify-content:space-between;
   }
   .brand{display:flex;align-items:center;gap:10px;}
-  .brand .dot{
-    width:10px;height:10px;border-radius:50%;
-  }
+  .brand .dot{width:10px;height:10px;border-radius:50%;}
   .brand h1{font-size:17px;font-weight:800;margin:0;letter-spacing:-0.01em;}
   .who{display:flex;align-items:center;gap:14px;}
   .who .name{font-size:13.5px;font-weight:600;}
@@ -146,6 +149,79 @@
   }
   .role-oficina{background:var(--oficina-soft);color:var(--oficina);}
   .role-deposito{background:var(--deposito-soft);color:var(--deposito);}
+
+  .bell-container {
+    position: relative;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--line-soft);
+    user-select: none;
+  }
+  .notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--alerta);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .notification-dropdown {
+    position: absolute;
+    top: 40px;
+    right: -10px;
+    width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 100;
+    overflow: hidden;
+  }
+  .notif-header {
+    background: var(--bg);
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--line);
+  }
+  .notif-item {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-empty { padding: 20px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+  .notif-danger { border-left: 4px solid var(--alerta); background: var(--alerta-soft); }
+  .notif-ok { border-left: 4px solid var(--ok); background: var(--ok-soft); }
+  .notif-alert { border-left: 4px solid var(--pendiente); }
+  .notif-info { border-left: 4px solid var(--oficina); }
+  .btn-dismiss {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .btn-dismiss:hover { background: rgba(0,0,0,0.05); color: var(--ink); }
 
   main{max-width:1080px;margin:0 auto;padding:26px 20px 60px;}
 
@@ -263,7 +339,6 @@
   .items-mini{font-size:12.8px;color:var(--ink-soft);}
   .items-mini div{padding:1px 0;}
 
-  /* ---------- Modal ---------- */
   .modal-overlay{
     display:none;
     position:fixed;inset:0;
@@ -328,7 +403,6 @@
     font-weight:600;font-size:12.8px;cursor:pointer;padding:0;
   }
 
-  /* ---------- Toast ---------- */
   #toast{
     position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
     background:var(--ink);color:#fff;
@@ -350,7 +424,6 @@
     tbody tr.row-alerta td:first-child{box-shadow:none;}
   }
 
-  /* ---------- Impresión: Nota de Pedido ---------- */
   #print-area{display:none;}
   .nota-pedido{font-family:'Inter',system-ui,sans-serif;color:#000;}
   .nota-pedido .np-print-title{
@@ -393,37 +466,66 @@
 </head>
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div id="login-screen">
-  <div class="login-card">
+<div id="auth-screen">
+  
+  <div class="login-card" id="login-view">
     <h1>Gestión de Pedidos</h1>
-    <p class="sub">Oficina y Depósito — ingresá con tu usuario.</p>
+    <p class="sub">Ingresá con tu correo y contraseña.</p>
     <form id="login-form">
       <div class="field">
-        <label for="login-user">Usuario</label>
-        <select id="login-user" required>
-          <option value="" disabled selected>Elegí tu usuario</option>
-          <optgroup label="Oficina">
-            <option value="administrativo">Administrativo</option>
-            <option value="comprador">Comprador</option>
-          </optgroup>
-          <optgroup label="Depósito">
-            <option value="mm3575">Mariano Moreno 3575</option>
-            <option value="sc3353">Sargento Cabral 3353</option>
-          </optgroup>
-        </select>
+        <label>Correo Electrónico</label>
+        <input type="email" id="login-email" required>
       </div>
       <div class="field">
-        <label for="login-pass">Contraseña</label>
+        <label>Contraseña</label>
         <input type="password" id="login-pass" required>
       </div>
       <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
-      <div id="login-error"></div>
+      <div id="login-error" class="auth-error"></div>
     </form>
+    <div class="auth-toggle">
+      ¿No tenés usuario? <a href="#" id="go-to-register">Crear cuenta</a>
+    </div>
   </div>
+
+  <div class="login-card" id="register-view" style="display:none;">
+    <h1>Crear Cuenta</h1>
+    <p class="sub">Registrá tu usuario en el sistema.</p>
+    <form id="register-form">
+      <div class="field">
+        <label>Nombre o Identificador (Ej: Mariano Moreno)</label>
+        <input type="text" id="reg-name" required>
+      </div>
+      <div class="field">
+        <label>Correo Electrónico</label>
+        <input type="email" id="reg-email" required>
+      </div>
+      <div class="field">
+        <label>Contraseña (Mínimo 6 caracteres)</label>
+        <input type="password" id="reg-pass" minlength="6" required>
+      </div>
+      <div class="field">
+        <label>Rol de Usuario</label>
+        <select id="reg-role" required>
+          <option value="" disabled selected>Seleccioná un rol</option>
+          <option value="oficina">Oficina (Administrativo / Comprador)</option>
+          <option value="deposito">Depósito</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Código de Invitación</label>
+        <input type="text" id="reg-code" required>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Registrarse</button>
+      <div id="reg-error" class="auth-error"></div>
+    </form>
+    <div class="auth-toggle">
+      ¿Ya tenés cuenta? <a href="#" id="go-to-login">Ingresar</a>
+    </div>
+  </div>
+
 </div>
 
-<!-- ================= APP ================= -->
 <div id="app-screen">
   <header class="topbar">
     <div class="brand">
@@ -431,6 +533,13 @@
       <h1>Gestión de Pedidos</h1>
     </div>
     <div class="who">
+      <div class="bell-container" id="bell-btn">
+        🔔<span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+        <div class="notification-dropdown" id="notif-dropdown" style="display:none;">
+          <div class="notif-header">Notificaciones</div>
+          <div id="notif-list"></div>
+        </div>
+      </div>
       <span class="name" id="who-name"></span>
       <span class="role-pill" id="who-role"></span>
       <button class="btn btn-ghost btn-sm" id="logout-btn">Cerrar sesión</button>
@@ -438,7 +547,6 @@
   </header>
 
   <main>
-    <!-- Oficina view -->
     <div id="view-oficina" style="display:none;">
       <div class="tabs">
         <button class="tab-btn active" data-tab="of-pedidos">Pedidos de salida</button>
@@ -477,7 +585,6 @@
       </div>
     </div>
 
-    <!-- Deposito view -->
     <div id="view-deposito" style="display:none;">
       <div class="tabs role-deposito-mode">
         <button class="tab-btn active" data-tab="de-pedidos">Pedidos recibidos</button>
@@ -531,7 +638,6 @@
   </main>
 </div>
 
-<!-- ================= MODALS ================= -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal-content"></div>
 </div>
@@ -540,9 +646,10 @@
 <div id="print-area"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+
 <script>
-/* ===================== FIREBASE ===================== */
 const firebaseConfig = {
   apiKey: "AIzaSyCxhe6icUQGW7K4ZyJq0BTBbn-R6CorHWw",
   authDomain: "comprarlicitacion.firebaseapp.com",
@@ -553,25 +660,15 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-/* ===================== USUARIOS ===================== */
-// Autenticación simple (no es Firebase Auth real). Cambiá estas contraseñas
-// editando este objeto antes de publicar la app.
-const USERS = {
-  administrativo: { label: "Administrativo",        rol: "oficina",  password: "admin2026" },
-  comprador:      { label: "Comprador",              rol: "oficina",  password: "compras2026" },
-  mm3575:         { label: "Mariano Moreno 3575",    rol: "deposito", password: "deposito1" },
-  sc3353:         { label: "Sargento Cabral 3353",   rol: "deposito", password: "deposito2" }
-};
-
-// Último N° de pedido ya usado antes de esta app (hoy: 26). El próximo
-// pedido que se cargue toma automáticamente el número siguiente.
 const ULTIMO_NUMERO_REGISTRADO = 26;
 
-let currentUser = null; // {key,label,rol}
+let currentUser = null; 
 let pedidosCache = [];
 let solicitudesCache = [];
 let numeroPedidoActual = null;
+let dismissedNotifs = [];
 
 function siguienteNumeroPedido(){
   let max = ULTIMO_NUMERO_REGISTRADO;
@@ -585,7 +682,6 @@ function siguienteNumeroPedido(){
   return "PED-" + String(max + 1).padStart(4, "0");
 }
 
-/* ===================== HELPERS ===================== */
 function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -608,6 +704,7 @@ function isOverdue(pedido){
   const diffHours = (Date.now() - base.getTime()) / 3600000;
   return diffHours >= 48;
 }
+
 function showToast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -627,44 +724,89 @@ document.getElementById("modal-overlay").addEventListener("click", e=>{
   if(e.target.id === "modal-overlay") closeModal();
 });
 
-/* ===================== LOGIN / LOGOUT ===================== */
+document.getElementById("go-to-register").addEventListener("click", e=>{
+  e.preventDefault();
+  document.getElementById("login-view").style.display = "none";
+  document.getElementById("register-view").style.display = "block";
+});
+
+document.getElementById("go-to-login").addEventListener("click", e=>{
+  e.preventDefault();
+  document.getElementById("register-view").style.display = "none";
+  document.getElementById("login-view").style.display = "block";
+});
+
 document.getElementById("login-form").addEventListener("submit", e=>{
   e.preventDefault();
-  const key = document.getElementById("login-user").value;
+  const email = document.getElementById("login-email").value.trim();
   const pass = document.getElementById("login-pass").value;
-  const u = USERS[key];
   const errEl = document.getElementById("login-error");
-  if(!u || u.password !== pass){
-    errEl.textContent = "Usuario o contraseña incorrectos.";
+  errEl.textContent = "Ingresando...";
+
+  auth.signInWithEmailAndPassword(email, pass).catch(err => {
+    errEl.textContent = "Error: Correo o contraseña incorrectos.";
+  });
+});
+
+document.getElementById("register-form").addEventListener("submit", e=>{
+  e.preventDefault();
+  const name = document.getElementById("reg-name").value.trim();
+  const email = document.getElementById("reg-email").value.trim();
+  const pass = document.getElementById("reg-pass").value;
+  const role = document.getElementById("reg-role").value;
+  const code = document.getElementById("reg-code").value.trim();
+  const errEl = document.getElementById("reg-error");
+
+  const validKey = btoa(code.split('').reverse().join(''));
+  if(validKey !== "ITE5NTRvcmllQg=="){
+    errEl.textContent = "Código de invitación inválido.";
     return;
   }
-  errEl.textContent = "";
-  currentUser = { key, label: u.label, rol: u.rol };
-  try{ sessionStorage.setItem("gp_user", key); }catch(e){}
-  startApp();
+
+  errEl.textContent = "Creando cuenta...";
+  auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+    return db.collection("users").doc(cred.user.uid).set({
+      label: name,
+      rol: role
+    });
+  }).catch(err => {
+    errEl.textContent = "Error al registrarse: " + err.message;
+  });
 });
 
 document.getElementById("logout-btn").addEventListener("click", ()=>{
-  currentUser = null;
-  try{ sessionStorage.removeItem("gp_user"); }catch(e){}
-  if(unsubPedidos) unsubPedidos();
-  if(unsubSolicitudes) unsubSolicitudes();
-  document.getElementById("app-screen").style.display = "none";
-  document.getElementById("login-screen").style.display = "flex";
-  document.getElementById("login-form").reset();
+  auth.signOut();
 });
 
-function tryRestoreSession(){
-  let key = null;
-  try{ key = sessionStorage.getItem("gp_user"); }catch(e){}
-  if(key && USERS[key]){
-    currentUser = { key, label: USERS[key].label, rol: USERS[key].rol };
-    startApp();
+auth.onAuthStateChanged(user => {
+  if(user){
+    db.collection("users").doc(user.uid).get().then(doc => {
+      if(doc.exists){
+        currentUser = { uid: user.uid, label: doc.data().label, rol: doc.data().rol };
+        loadDismissedNotifs();
+        startApp();
+      } else {
+        auth.signOut();
+      }
+    }).catch(err => {
+      console.error(err);
+      auth.signOut();
+    });
+  } else {
+    currentUser = null;
+    if(unsubPedidos) unsubPedidos();
+    if(unsubSolicitudes) unsubSolicitudes();
+    document.getElementById("app-screen").style.display = "none";
+    document.getElementById("auth-screen").style.display = "flex";
+    document.getElementById("login-form").reset();
+    document.getElementById("register-form").reset();
+    document.getElementById("login-error").textContent = "";
+    document.getElementById("reg-error").textContent = "";
   }
-}
+});
 
 function startApp(){
-  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("auth-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("who-name").textContent = currentUser.label;
   const roleEl = document.getElementById("who-role");
@@ -679,7 +821,86 @@ function startApp(){
   listenSolicitudes();
 }
 
-/* ===================== TABS ===================== */
+function loadDismissedNotifs(){
+  if(!currentUser) return;
+  try {
+    const raw = localStorage.getItem("gp_notifs_" + currentUser.uid);
+    if(raw) dismissedNotifs = JSON.parse(raw);
+  } catch(e) {}
+}
+
+window.dismissNotif = function(key){
+  if(!dismissedNotifs.includes(key)) {
+    dismissedNotifs.push(key);
+    localStorage.setItem("gp_notifs_" + currentUser.uid, JSON.stringify(dismissedNotifs));
+  }
+  updateNotifications();
+};
+
+document.getElementById("bell-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const dropdown = document.getElementById("notif-dropdown");
+  dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+});
+
+document.addEventListener("click", (e) => {
+  if(!e.target.closest("#bell-btn")) {
+    document.getElementById("notif-dropdown").style.display = "none";
+  }
+});
+
+function updateNotifications() {
+  if (!currentUser) return;
+  const list = document.getElementById("notif-list");
+  const badge = document.getElementById("notif-badge");
+  let items = [];
+
+  if (currentUser.rol === "oficina") {
+    const reservas = pedidosCache.filter(p => p.estado === "reservado");
+    const solics = solicitudesCache.filter(s => s.estado === "pendiente");
+    reservas.forEach(p => {
+      const key = "ok_" + p.id;
+      if(!dismissedNotifs.includes(key)) items.push({key, text: `Pedido ${p.numeroPedido} armado y listo`, type: 'ok'});
+    });
+    solics.forEach(s => {
+      const key = "sol_" + s.id;
+      if(!dismissedNotifs.includes(key)) items.push({key, text: `Nueva solicitud de insumos de ${s.solicitadoPor}`, type: 'alert'});
+    });
+  } else {
+    const pendientes = pedidosCache.filter(p => p.estado === "pendiente");
+    const solConfirmadas = solicitudesCache.filter(s => s.estado === "confirmada");
+    
+    pendientes.forEach(p => {
+      const overdue = isOverdue(p);
+      if (overdue) {
+        const key = "vencido_" + p.id;
+        if(!dismissedNotifs.includes(key)) items.push({key, text: `VENCIDO: Armar pedido ${p.numeroPedido}`, type: 'danger'});
+      } else {
+        const key = "nuevo_" + p.id;
+        if(!dismissedNotifs.includes(key)) items.push({key, text: `Nuevo pedido de salida: ${p.numeroPedido}`, type: 'info'});
+      }
+    });
+
+    solConfirmadas.forEach(s => {
+      const key = "llegada_" + s.id;
+      if(!dismissedNotifs.includes(key)) items.push({key, text: `Solicitud de insumos confirmada (Llega ${fmtDate(s.fechaLlegada)})`, type: 'ok'});
+    });
+  }
+
+  badge.textContent = items.length;
+  badge.style.display = items.length > 0 ? "flex" : "none";
+  if (items.length === 0) {
+    list.innerHTML = '<div class="notif-empty">No hay notificaciones nuevas</div>';
+  } else {
+    list.innerHTML = items.map(i => `
+      <div class="notif-item notif-${i.type}">
+        <span>${escapeHtml(i.text)}</span>
+        <button class="btn-dismiss" onclick="dismissNotif('${i.key}')">✕</button>
+      </div>
+    `).join("");
+  }
+}
+
 document.querySelectorAll(".tab-btn").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     const scope = btn.closest(".tabs");
@@ -693,7 +914,6 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
   });
 });
 
-/* ===================== FIRESTORE LISTENERS ===================== */
 let unsubPedidos = null;
 let unsubSolicitudes = null;
 
@@ -703,9 +923,10 @@ function listenPedidos(){
     .onSnapshot(snap=>{
       pedidosCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderPedidos();
+      updateNotifications();
     }, err=>{
       console.error(err);
-      showToast("Error leyendo pedidos: revisá las reglas de Firestore.");
+      showToast("Error leyendo pedidos.");
     });
 }
 function listenSolicitudes(){
@@ -714,13 +935,13 @@ function listenSolicitudes(){
     .onSnapshot(snap=>{
       solicitudesCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderSolicitudes();
+      updateNotifications();
     }, err=>{
       console.error(err);
-      showToast("Error leyendo solicitudes: revisá las reglas de Firestore.");
+      showToast("Error leyendo solicitudes.");
     });
 }
 
-/* ===================== RENDER: PEDIDOS ===================== */
 function itemsResumen(items){
   if(!items || !items.length) return '<span class="muted">—</span>';
   return '<div class="items-mini">' + items.map(it=>
@@ -915,7 +1136,6 @@ window.verDetalleSenasa = function(id){
   `);
 };
 
-/* ===================== NUEVO PEDIDO (Oficina) ===================== */
 let itemRowIndex = 0;
 function itemRowHtml(idx){
   return `<div class="item-row" data-idx="${idx}">
@@ -1055,7 +1275,6 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
   });
 });
 
-/* ===================== MARCAR ARMADO Y RESERVADO (Depósito) ===================== */
 window.abrirArmarPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
@@ -1099,7 +1318,6 @@ window.abrirArmarPedido = function(id){
   });
 };
 
-/* ===================== RENDER: SOLICITUDES ===================== */
 function productosResumen(productos){
   if(!productos || !productos.length) return '<span class="muted">—</span>';
   return '<div class="items-mini">' + productos.map(pr=>
@@ -1138,7 +1356,7 @@ function renderSolicitudesOficina(){
 }
 
 function renderSolicitudesDeposito(){
-  const mias = solicitudesCache; // visibles para ambos usuarios de depósito
+  const mias = solicitudesCache; 
   const body = document.getElementById("de-solicitudes-body");
   const empty = document.getElementById("de-solicitudes-empty");
   document.getElementById("de-solicitudes-count").textContent = mias.length ? `(${mias.length})` : "";
@@ -1161,7 +1379,6 @@ function renderSolicitudesDeposito(){
   }).join("");
 }
 
-/* ===================== NUEVA SOLICITUD (Depósito) ===================== */
 let prodRowIndex = 0;
 function prodRowHtml(idx){
   return `<div class="item-row" style="grid-template-columns:2fr 1fr auto;" data-idx="${idx}">
@@ -1222,7 +1439,6 @@ document.getElementById("btn-nueva-solicitud").addEventListener("click", ()=>{
   });
 });
 
-/* ===================== GESTIONAR SOLICITUD (Oficina) ===================== */
 window.abrirGestionarSolicitud = function(id){
   const s = solicitudesCache.find(x=>x.id===id);
   if(!s) return;
@@ -1260,8 +1476,6 @@ window.abrirGestionarSolicitud = function(id){
   });
 };
 
-/* ===================== INIT ===================== */
-tryRestoreSession();
 setInterval(()=>{ if(currentUser && currentUser.rol==="deposito") renderPedidosDeposito(); }, 60000);
 </script>
 </body>
