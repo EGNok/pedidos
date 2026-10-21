@@ -100,7 +100,7 @@
     padding:10px 12px;
     border:1px solid var(--line);
     border-radius:8px;
-    font-size:16px; /* Evita zoom automático en iOS */
+    font-size:16px;
     color:var(--ink);
     background:var(--surface);
   }
@@ -131,6 +131,7 @@
   .btn-secondary:hover{filter:brightness(0.97);}
   .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
   .btn-danger{background:var(--alerta);color:#fff;}
+  .btn-danger:hover{filter:brightness(1.08);}
   .btn-sm{padding:6px 10px;font-size:12px;}
   .auth-error{
     color:var(--alerta);
@@ -693,6 +694,7 @@ let pedidosCache = [];
 let solicitudesCache = [];
 let dismissedNotifs = JSON.parse(localStorage.getItem("gp_dismissed_notifs") || "[]");
 let activeNotifIds = []; 
+let itemRowIndex = 0;
 
 function checkInviteCode(input) {
   try {
@@ -988,6 +990,38 @@ window.dismissNotif = function(id){
   }
 };
 
+window.pedirPinAccion = function(id, accion){
+  openModal(`
+    <h3>Código de seguridad</h3>
+    <p class="modal-sub">Ingrese el código para ${accion} el pedido.</p>
+    <form id="form-pin">
+      <div class="field">
+        <input type="password" id="pin-input" required autofocus>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Aceptar</button>
+      </div>
+    </form>
+  `);
+  document.getElementById("form-pin").addEventListener("submit", e=>{
+    e.preventDefault();
+    const pin = document.getElementById("pin-input").value;
+    if(pin === "4591"){
+      if(accion === "eliminar"){
+        db.collection("pedidos").doc(id).delete().then(()=>{
+          showToast("Pedido eliminado correctamente.");
+          closeModal();
+        }).catch(()=>showToast("Error al eliminar el pedido."));
+      } else if(accion === "editar"){
+        abrirFormularioPedido(id);
+      }
+    } else {
+      showToast("Código incorrecto.");
+    }
+  });
+};
+
 function itemsResumen(items){
   if(!items || !items.length) return '<span class="muted">—</span>';
   return '<div class="items-mini">' + items.map(it=>
@@ -1017,13 +1051,12 @@ function renderPedidosOficina(){
   empty.style.display="none";
 
   body.innerHTML = pedidosCache.map(p=>{
-    const badge = p.estado === "reservado"
-      ? '<span class="badge badge-reservado">Reservado</span>'
-      : '<span class="badge badge-pendiente">Pendiente</span>';
+    const isPendiente = p.estado === "pendiente";
+    const badge = isPendiente
+      ? '<span class="badge badge-pendiente">Pendiente</span>'
+      : '<span class="badge badge-reservado">Reservado</span>';
     const ecoBadge = p.tipoPedido === "eco" ? '<span class="badge badge-eco">Eco</span>' : "";
-    const detailBtn = p.estado === "reservado"
-      ? `<button class="expand-link" onclick="verDetalleSenasa('${p.id}')">Ver datos SENASA</button><br>`
-      : "";
+    
     return `<tr>
       <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${p.numeroSPR ? `<div class="muted" style="font-size:11px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
       <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
@@ -1031,7 +1064,13 @@ function renderPedidosOficina(){
       <td>${fmtDate(p.fechaEntrega)}</td>
       <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
       <td>${badge}</td>
-      <td>${detailBtn}<button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button></td>
+      <td>
+        ${!isPendiente ? `<button class="expand-link" style="margin-bottom:6px;" onclick="verDetalleSenasa('${p.id}')">Ver datos SENASA</button><br>` : ''}
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          ${isPendiente ? `<button class="btn btn-primary btn-sm" onclick="pedirPinAccion('${p.id}', 'editar')">Editar</button><button class="btn btn-danger btn-sm" onclick="pedirPinAccion('${p.id}', 'eliminar')">Eliminar</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button>
+        </div>
+      </td>
     </tr>`;
   }).join("");
 }
@@ -1223,20 +1262,6 @@ window.verDetalleSenasa = function(id){
   `);
 };
 
-let itemRowIndex = 0;
-function itemRowHtml(idx){
-  return `<div class="item-row" data-idx="${idx}">
-    <input type="text" placeholder="Ítem" class="np-item" required>
-    <input type="number" placeholder="Cant." min="0" step="any" class="np-cant" required>
-    <input type="text" placeholder="Unidad" class="np-unidad">
-    <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
-  </div>`;
-}
-
-function addItemRow(containerId){
-  document.getElementById(containerId).insertAdjacentHTML("beforeend", itemRowHtml(itemRowIndex++));
-}
-
 function readItemsFrom(containerId){
   return Array.from(document.querySelectorAll(`#${containerId} .item-row`)).map(row=>({
     item: row.querySelector(".np-item").value.trim(),
@@ -1257,35 +1282,45 @@ function siguienteNumeroPedido(){
   return "PED-" + String(max + 1).padStart(4, "0");
 }
 
-document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
+window.abrirFormularioPedido = function(idToEdit = null) {
+  let p = null;
+  if(idToEdit){
+    p = pedidosCache.find(x => x.id === idToEdit);
+    if(!p) return;
+  }
+  
   itemRowIndex = 0;
-  const numActual = siguienteNumeroPedido();
+  const numActual = p ? p.numeroPedido : siguienteNumeroPedido();
+  const titulo = p ? "Editar pedido de salida" : "Nuevo pedido de salida";
+  const subtitulo = p ? `Modificando ${escapeHtml(p.numeroPedido)}` : "Se enviará directamente al panel del depósito.";
+  const isEco = p ? (p.tipoPedido === "eco") : false;
+
   openModal(`
-    <h3>Nuevo pedido de salida</h3>
-    <p class="modal-sub">Se enviará directamente al panel del depósito.</p>
+    <h3>${titulo}</h3>
+    <p class="modal-sub">${subtitulo}</p>
     <form id="form-nuevo-pedido">
       <div class="row-2">
-        <div class="field"><label>Empresa</label><input type="text" id="np-empresa" required></div>
-        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" class="readonly-field" readonly value="${numActual}"></div>
+        <div class="field"><label>Empresa</label><input type="text" id="np-empresa" value="${escapeHtml(p?.empresa||'')}" required></div>
+        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" class="readonly-field" readonly value="${escapeHtml(numActual)}"></div>
       </div>
       <div class="row-2">
-        <div class="field"><label>Entidad (datos del cliente)</label><input type="text" id="np-entidad"></div>
-        <div class="field"><label>SPR</label><input type="text" id="np-spr" placeholder="Si corresponde"></div>
+        <div class="field"><label>Entidad (datos del cliente)</label><input type="text" id="np-entidad" value="${escapeHtml(p?.entidad||'')}"></div>
+        <div class="field"><label>SPR</label><input type="text" id="np-spr" placeholder="Si corresponde" value="${escapeHtml(p?.numeroSPR||'')}"></div>
       </div>
       <div class="row-2">
-        <div class="field"><label>Fecha</label><input type="date" id="np-fecha" required></div>
-        <div class="field"><label>Fecha de entrega</label><input type="date" id="np-fecha-entrega"></div>
+        <div class="field"><label>Fecha</label><input type="date" id="np-fecha" value="${escapeHtml(p?.fecha||'')}" required></div>
+        <div class="field"><label>Fecha de entrega</label><input type="date" id="np-fecha-entrega" value="${escapeHtml(p?.fechaEntrega||'')}"></div>
       </div>
 
       <div class="field">
         <label>Tipo de pedido</label>
         <div class="tipo-toggle">
-          <label class="tipo-opt active" data-val="normal"><input type="radio" name="np-tipo" value="normal" checked> Normal</label>
-          <label class="tipo-opt" data-val="eco"><input type="radio" name="np-tipo" value="eco"> Eco</label>
+          <label class="tipo-opt ${!isEco?'active':''}" data-val="normal"><input type="radio" name="np-tipo" value="normal" ${!isEco?'checked':''}> Normal</label>
+          <label class="tipo-opt ${isEco?'active':''}" data-val="eco"><input type="radio" name="np-tipo" value="eco" ${isEco?'checked':''}> Eco</label>
         </div>
       </div>
 
-      <div id="np-bloque-normal">
+      <div id="np-bloque-normal" style="display:${!isEco?'block':'none'};">
         <div class="field">
           <label>Ítems</label>
           <div class="items-repeater" id="np-items"></div>
@@ -1293,7 +1328,7 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
         </div>
       </div>
 
-      <div id="np-bloque-eco" style="display:none;">
+      <div id="np-bloque-eco" style="display:${isEco?'block':'none'};">
         <div class="field">
           <label>Remito</label>
           <div class="items-repeater" id="np-items-remito"></div>
@@ -1308,27 +1343,55 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
 
       <div class="field">
         <label>Aclaraciones de oficina</label>
-        <textarea id="np-aclaracion-oficina" placeholder="Cualquier observación que deba ver el depósito"></textarea>
+        <textarea id="np-aclaracion-oficina" placeholder="Cualquier observación que deba ver el depósito">${escapeHtml(p?.aclaracionOficina||'')}</textarea>
       </div>
 
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Enviar pedido</button>
+        <button type="submit" class="btn btn-primary">${p ? "Guardar cambios" : "Enviar pedido"}</button>
       </div>
     </form>
   `);
 
-  addItemRow("np-items");
-  addItemRow("np-items-remito");
-  addItemRow("np-items-entrega");
-  document.getElementById("np-add-row").addEventListener("click", ()=> addItemRow("np-items"));
-  document.getElementById("np-add-row-remito").addEventListener("click", ()=> addItemRow("np-items-remito"));
-  document.getElementById("np-add-row-entrega").addEventListener("click", ()=> addItemRow("np-items-entrega"));
-  document.getElementById("np-fecha").valueAsDate = new Date();
+  const itemsBox = document.getElementById("np-items");
+  const remitoBox = document.getElementById("np-items-remito");
+  const entregaBox = document.getElementById("np-items-entrega");
+
+  function _addItemHtml(container, it = {item:'', cantidad:'', unidad:''}) {
+    container.insertAdjacentHTML("beforeend", `<div class="item-row" data-idx="${itemRowIndex++}">
+      <input type="text" placeholder="Ítem" class="np-item" value="${escapeHtml(it.item)}" required>
+      <input type="number" placeholder="Cant." min="0" step="any" class="np-cant" value="${escapeHtml(it.cantidad)}" required>
+      <input type="text" placeholder="Unidad" class="np-unidad" value="${escapeHtml(it.unidad)}">
+      <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
+    </div>`);
+  }
+
+  if(p) {
+    if(p.tipoPedido === "normal" && p.items) p.items.forEach(it => _addItemHtml(itemsBox, it));
+    if(p.tipoPedido === "eco") {
+      if(p.itemsRemito) p.itemsRemito.forEach(it => _addItemHtml(remitoBox, it));
+      if(p.itemsEntrega) p.itemsEntrega.forEach(it => _addItemHtml(entregaBox, it));
+    }
+  }
+  
+  if(!itemsBox.children.length) _addItemHtml(itemsBox);
+  if(!remitoBox.children.length) _addItemHtml(remitoBox);
+  if(!entregaBox.children.length) _addItemHtml(entregaBox);
+
+  document.getElementById("np-add-row").addEventListener("click", ()=> _addItemHtml(itemsBox));
+  document.getElementById("np-add-row-remito").addEventListener("click", ()=> _addItemHtml(remitoBox));
+  document.getElementById("np-add-row-entrega").addEventListener("click", ()=> _addItemHtml(entregaBox));
+  
+  if(!p) document.getElementById("np-fecha").valueAsDate = new Date();
 
   const bNormal = document.getElementById("np-bloque-normal");
   const bEco = document.getElementById("np-bloque-eco");
-  bEco.querySelectorAll("input").forEach(inp => inp.disabled = true);
+
+  if(isEco) {
+    bNormal.querySelectorAll("input").forEach(inp => inp.disabled = true);
+  } else {
+    bEco.querySelectorAll("input").forEach(inp => inp.disabled = true);
+  }
 
   document.querySelectorAll('input[name="np-tipo"]').forEach(r=>{
     r.addEventListener("change", ()=>{
@@ -1355,10 +1418,7 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
       fecha: document.getElementById("np-fecha").value,
       fechaEntrega: document.getElementById("np-fecha-entrega").value,
       tipoPedido: tipo,
-      aclaracionOficina: document.getElementById("np-aclaracion-oficina").value.trim(),
-      estado: "pendiente",
-      creadoPor: currentUser.label,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      aclaracionOficina: document.getElementById("np-aclaracion-oficina").value.trim()
     };
 
     if(tipo === "eco"){
@@ -1367,20 +1427,37 @@ document.getElementById("btn-nuevo-pedido").addEventListener("click", ()=>{
       if(!itemsRemito.length && !itemsEntrega.length){ showToast("Agregá al menos un ítem."); return; }
       payload.itemsRemito = itemsRemito;
       payload.itemsEntrega = itemsEntrega;
+      payload.items = firebase.firestore.FieldValue.delete();
     } else {
       const items = readItemsFrom("np-items");
       if(!items.length){ showToast("Agregá al menos un ítem."); return; }
       payload.items = items;
+      payload.itemsRemito = firebase.firestore.FieldValue.delete();
+      payload.itemsEntrega = firebase.firestore.FieldValue.delete();
     }
 
-    db.collection("pedidos").add(payload).then(()=>{
-      showToast("Pedido enviado al depósito.");
-      closeModal();
-    }).catch(err=>{
-      showToast("No se pudo guardar el pedido.");
-    });
+    if(idToEdit) {
+      db.collection("pedidos").doc(idToEdit).update(payload).then(()=>{
+        showToast("Pedido actualizado exitosamente.");
+        closeModal();
+      }).catch(()=>{
+        showToast("No se pudo actualizar el pedido.");
+      });
+    } else {
+      payload.estado = "pendiente";
+      payload.creadoPor = currentUser.label;
+      payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      db.collection("pedidos").add(payload).then(()=>{
+        showToast("Pedido enviado al depósito.");
+        closeModal();
+      }).catch(()=>{
+        showToast("No se pudo guardar el pedido.");
+      });
+    }
   });
-});
+};
+
+document.getElementById("btn-nuevo-pedido").addEventListener("click", () => abrirFormularioPedido(null));
 
 window.abrirArmarPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
