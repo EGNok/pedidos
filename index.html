@@ -1427,13 +1427,15 @@ window.abrirFormularioPedido = function(idToEdit = null) {
       if(!itemsRemito.length && !itemsEntrega.length){ showToast("Agregá al menos un ítem."); return; }
       payload.itemsRemito = itemsRemito;
       payload.itemsEntrega = itemsEntrega;
-      payload.items = firebase.firestore.FieldValue.delete();
+      if(idToEdit) payload.items = firebase.firestore.FieldValue.delete();
     } else {
       const items = readItemsFrom("np-items");
       if(!items.length){ showToast("Agregá al menos un ítem."); return; }
       payload.items = items;
-      payload.itemsRemito = firebase.firestore.FieldValue.delete();
-      payload.itemsEntrega = firebase.firestore.FieldValue.delete();
+      if(idToEdit) {
+        payload.itemsRemito = firebase.firestore.FieldValue.delete();
+        payload.itemsEntrega = firebase.firestore.FieldValue.delete();
+      }
     }
 
     if(idToEdit) {
