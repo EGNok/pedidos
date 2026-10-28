@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gestión de Pedidos</title>
+<title>Gestión de Pedidos, Stock y Clientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -100,7 +100,7 @@
     padding:10px 12px;
     border:1px solid var(--line);
     border-radius:8px;
-    font-size:16px;
+    font-size:15px;
     color:var(--ink);
     background:var(--surface);
   }
@@ -142,21 +142,58 @@
 
   #app-screen{display:none;min-height:100vh;}
   header.topbar{
-    background:var(--surface);
-    border-bottom:1px solid var(--line);
-    padding:10px 16px;
+    background:#2A2D32;
+    padding:8px 16px 0 16px;
     display:flex;
-    align-items:center;
+    align-items:flex-end;
     justify-content:space-between;
     position:relative;
     flex-wrap:wrap;
     gap:8px;
+    border-bottom:1px solid var(--line);
   }
-  .brand{display:flex;align-items:center;gap:8px;}
-  .brand .dot{width:9px;height:9px;border-radius:50%;}
-  .brand h1{font-size:15px;font-weight:800;margin:0;letter-spacing:-0.01em;}
-  .who{display:flex;align-items:center;gap:10px; flex-wrap:wrap;}
-  .who .name{font-size:13px;font-weight:600;}
+  
+  .browser-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .browser-tab {
+    background: #3A3D42;
+    color: #A0A5AD;
+    padding: 8px 18px;
+    border-radius: 8px 8px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+  }
+  .browser-tab:hover {
+    background: #4A4D53;
+    color: #FFFFFF;
+  }
+  .browser-tab.active {
+    background: var(--bg);
+    color: var(--ink);
+    border-color: var(--line);
+    font-weight: 700;
+  }
+  .browser-tab .dot-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--oficina);
+  }
+
+  .who{display:flex;align-items:center;gap:10px; flex-wrap:wrap; margin-bottom: 8px;}
+  .who .name{font-size:13px;font-weight:600; color:#E0E4E8;}
   .who .role-pill{
     font-size:11px;
     font-weight:700;
@@ -176,7 +213,7 @@
     padding:4px;
     border-radius:50%;
   }
-  .notif-btn:hover{background:var(--line-soft);}
+  .notif-btn:hover{background:rgba(255,255,255,0.1);}
   .notif-badge{
     position:absolute;
     top:0;
@@ -205,6 +242,7 @@
     z-index:100;
     max-height:340px;
     overflow-y:auto;
+    color:var(--ink);
   }
   .notif-dropdown.open{display:block;}
   .notif-header{
@@ -305,7 +343,7 @@
     white-space:nowrap;
   }
   .badge-pendiente{background:var(--pendiente-soft);color:var(--pendiente);}
-  .badge-reservado{background:var(--ok-soft);color:var(--ok);}
+  .badge-reservado{background:#E0F2FE;color:#0369A1;}
   .badge-confirmada{background:var(--ok-soft);color:var(--ok);}
   .badge-eco{background:#EDE4F6;color:#6B3FA0;}
 
@@ -371,7 +409,7 @@
     background:var(--surface);
     border-radius:14px;
     width:100%;
-    max-width:540px;
+    max-width:560px;
     max-height:90vh;
     overflow-y:auto;
     padding:20px;
@@ -390,7 +428,7 @@
     display:grid;grid-template-columns:2fr 1fr 1fr auto;
     gap:6px;margin-bottom:6px;align-items:center;
   }
-  .items-repeater .item-row input{padding:8px;font-size:14px;}
+  .items-repeater .item-row input, .items-repeater .item-row select{padding:8px;font-size:13px;}
   .row-remove{
     background:var(--line-soft);border:none;color:var(--ink-soft);
     width:32px;height:36px;border-radius:6px;cursor:pointer;font-size:14px;
@@ -439,8 +477,9 @@
     .items-repeater .item-row input:first-child{grid-column: span 2;}
   }
 
+  /* NOTA DE PEDIDO DE IMPRESIÓN ORIGINAL RESTAURADA */
   #print-area{display:none;}
-  .nota-pedido{font-family:'Inter',system-ui,sans-serif;color:#000;}
+  .nota-pedido{font-family:'Inter',system-ui,sans-serif;color:#000; background:#fff;}
   .nota-pedido .np-print-title{
     text-align:center;font-size:20px;font-weight:800;
     border:2px solid #000;padding:8px;margin:0;
@@ -472,10 +511,16 @@
   }
   .nota-pedido table.np-print-aclaracion td.np-print-box.highlight{background:#FFF200;}
 
-  @media print{
-    body *{visibility:hidden;}
-    #print-area, #print-area *{visibility:visible;}
-    #print-area{display:block;position:absolute;top:0;left:0;width:100%;padding:16px;}
+  @media print {
+    html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+    body > * { display: none !important; }
+    #print-area {
+      display: block !important;
+      position: absolute !important;
+      left: 0 !important; top: 0 !important;
+      width: 100% !important; margin: 0 !important; padding: 0 !important;
+      background: #fff !important;
+    }
   }
 </style>
 </head>
@@ -483,7 +528,7 @@
 
 <div id="login-screen">
   <div class="login-card">
-    <h1>Gestión de Pedidos</h1>
+    <h1>Gestión de Pedidos y Stock</h1>
     <p class="sub">Acceso al sistema centralizado.</p>
     
     <div class="auth-tabs">
@@ -536,9 +581,20 @@
 
 <div id="app-screen">
   <header class="topbar">
-    <div class="brand">
-      <span class="dot" id="brand-dot"></span>
-      <h1>Gestión de Pedidos</h1>
+    <div class="browser-tabs">
+      <div class="browser-tab active" id="main-tab-pedidos" onclick="switchMainTab('pedidos')">
+        <span class="dot-indicator" id="brand-dot"></span>
+        <span>Gestión de Pedidos</span>
+      </div>
+      <div class="browser-tab" id="main-tab-stock" onclick="switchMainTab('stock')">
+        <span>📦 Control de Stock</span>
+      </div>
+      <div class="browser-tab" id="main-tab-depositos" onclick="switchMainTab('depositos')">
+        <span>🏢 Depósitos</span>
+      </div>
+      <div class="browser-tab" id="main-tab-clientes" onclick="switchMainTab('clientes')">
+        <span>👥 Clientes / Empresas</span>
+      </div>
     </div>
     <div class="who">
       <div class="notif-wrapper">
@@ -556,107 +612,181 @@
       </div>
       <span class="name" id="who-name"></span>
       <span class="role-pill" id="who-role"></span>
-      <button class="btn btn-ghost btn-sm" id="logout-btn">Salir</button>
+      <button class="btn btn-ghost btn-sm" id="logout-btn" style="color:#FFF; border-color:#555;">Salir</button>
     </div>
   </header>
 
   <main>
-    <div id="view-oficina" style="display:none;">
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="of-pedidos">Pedidos de salida</button>
-        <button class="tab-btn" data-tab="of-solicitudes">Solicitudes de depósito</button>
+    <!-- VENTANA PEDIDOS -->
+    <div id="window-pedidos">
+      <div id="view-oficina" style="display:none;">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="of-pedidos">Pedidos de salida</button>
+          <button class="tab-btn" data-tab="of-solicitudes">Solicitudes de depósito</button>
+        </div>
+
+        <div id="tab-of-pedidos">
+          <div class="section-head">
+            <h2>Pedidos de salida <span class="count" id="of-pedidos-count"></span></h2>
+            <button class="btn btn-primary btn-sm" id="btn-nuevo-pedido">+ Nuevo pedido</button>
+          </div>
+          <div class="card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="of-pedidos-body"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="of-pedidos-empty" style="display:none;">Todavía no cargaste ningún pedido.</div>
+          </div>
+        </div>
+
+        <div id="tab-of-solicitudes" style="display:none;">
+          <div class="section-head">
+            <h2>Solicitudes de depósito <span class="count" id="of-solicitudes-count"></span></h2>
+          </div>
+          <div class="card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr><th>Solicitado por</th><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="of-solicitudes-body"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="of-solicitudes-empty" style="display:none;">No hay solicitudes del depósito por ahora.</div>
+          </div>
+        </div>
       </div>
 
-      <div id="tab-of-pedidos">
-        <div class="section-head">
-          <h2>Pedidos de salida <span class="count" id="of-pedidos-count"></span></h2>
-          <button class="btn btn-primary btn-sm" id="btn-nuevo-pedido">+ Nuevo pedido</button>
+      <div id="view-deposito" style="display:none;">
+        <div class="tabs role-deposito-mode">
+          <button class="tab-btn active" data-tab="de-pedidos">Pedidos recibidos</button>
+          <button class="tab-btn" data-tab="de-solicitudes">Solicitudes de depósito</button>
         </div>
-        <div class="card">
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Estado</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="of-pedidos-body"></tbody>
-            </table>
-          </div>
-          <div class="empty-state" id="of-pedidos-empty" style="display:none;">Todavía no cargaste ningún pedido.</div>
-        </div>
-      </div>
 
-      <div id="tab-of-solicitudes" style="display:none;">
-        <div class="section-head">
-          <h2>Solicitudes de depósito <span class="count" id="of-solicitudes-count"></span></h2>
-        </div>
-        <div class="card">
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr><th>Solicitado por</th><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="of-solicitudes-body"></tbody>
-            </table>
+        <div id="tab-de-pedidos">
+          <div class="section-head">
+            <h2>Pendientes y Reservados <span class="count" id="de-pendientes-count"></span></h2>
           </div>
-          <div class="empty-state" id="of-solicitudes-empty" style="display:none;">No hay solicitudes del depósito por ahora.</div>
+          <div class="card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="de-pendientes-body"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="de-pendientes-empty" style="display:none;">No hay pedidos pendientes o reservados.</div>
+          </div>
+
+          <div class="section-head" style="margin-top:24px;">
+            <h2>Confirmados y Entregados <span class="count" id="de-reservados-count"></span></h2>
+          </div>
+          <div class="card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr><th>N° Pedido</th><th>Empresa</th><th>Chofer / Matrícula</th><th>Aclaración</th><th>Armado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="de-reservados-body"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="de-reservados-empty" style="display:none;">Todavía no confirmaste ningún pedido.</div>
+          </div>
+        </div>
+
+        <div id="tab-de-solicitudes" style="display:none;">
+          <div class="section-head">
+            <h2>Solicitudes de insumos <span class="count" id="de-solicitudes-count"></span></h2>
+            <button class="btn btn-primary btn-sm" id="btn-nueva-solicitud">+ Nueva solicitud</button>
+          </div>
+          <div class="card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Respuesta de oficina</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="de-solicitudes-body"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="de-solicitudes-empty" style="display:none;">No generaste solicitudes todavía.</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div id="view-deposito" style="display:none;">
-      <div class="tabs role-deposito-mode">
-        <button class="tab-btn active" data-tab="de-pedidos">Pedidos recibidos</button>
-        <button class="tab-btn" data-tab="de-solicitudes">Solicitudes de depósito</button>
-      </div>
-
-      <div id="tab-de-pedidos">
-        <div class="section-head">
-          <h2>Pendientes de armar <span class="count" id="de-pendientes-count"></span></h2>
-        </div>
-        <div class="card">
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr><th>N° Pedido</th><th>Empresa / Entidad</th><th>Fecha</th><th>Entrega</th><th>Ítems</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="de-pendientes-body"></tbody>
-            </table>
-          </div>
-          <div class="empty-state" id="de-pendientes-empty" style="display:none;">No hay pedidos pendientes.</div>
-        </div>
-
-        <div class="section-head" style="margin-top:24px;">
-          <h2>Reservados (historial) <span class="count" id="de-reservados-count"></span></h2>
-        </div>
-        <div class="card">
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr><th>N° Pedido</th><th>Empresa</th><th>Chofer / Matrícula</th><th>Aclaración</th><th>Armado</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="de-reservados-body"></tbody>
-            </table>
-          </div>
-          <div class="empty-state" id="de-reservados-empty" style="display:none;">Todavía no armaste ningún pedido.</div>
+    <!-- VENTANA STOCK -->
+    <div id="window-stock" style="display:none;">
+      <div class="section-head">
+        <h2>Inventario y Control de Stock <span class="count" id="stock-count"></span></h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="filter-deposito-select" onchange="renderStock()" style="padding:6px 10px; border:1px solid var(--line); border-radius:8px; font-size:13px; font-weight:600;">
+            <option value="">🔍 Todos los Depósitos</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="btn-nuevo-stock-prod">+ Agregar Producto a Stock</button>
         </div>
       </div>
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Depósito</th>
+                <th>Unidad</th>
+                <th>Stock Real (Físico)</th>
+                <th>Reservado (Pedidos)</th>
+                <th>Disponible (Restante)</th>
+                <th>Confirmado (Entregado)</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="stock-body"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="stock-empty" style="display:none;">No hay productos registrados en el stock.</div>
+      </div>
+    </div>
 
-      <div id="tab-de-solicitudes" style="display:none;">
-        <div class="section-head">
-          <h2>Solicitudes de insumos <span class="count" id="de-solicitudes-count"></span></h2>
-          <button class="btn btn-primary btn-sm" id="btn-nueva-solicitud">+ Nueva solicitud</button>
+    <!-- VENTANA DEPÓSITOS -->
+    <div id="window-depositos" style="display:none;">
+      <div class="section-head">
+        <h2>Alta y Registro de Depósitos <span class="count" id="depositos-count"></span></h2>
+        <button class="btn btn-primary btn-sm" id="btn-nuevo-deposito">+ Nuevo Depósito</button>
+      </div>
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>Nombre del Depósito</th><th>Ubicación / Dirección</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="depositos-body"></tbody>
+          </table>
         </div>
-        <div class="card">
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Respuesta de oficina</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="de-solicitudes-body"></tbody>
-            </table>
-          </div>
-          <div class="empty-state" id="de-solicitudes-empty" style="display:none;">No generaste solicitudes todavía.</div>
+        <div class="empty-state" id="depositos-empty" style="display:none;">No hay depósitos registrados.</div>
+      </div>
+    </div>
+
+    <!-- VENTANA CLIENTES -->
+    <div id="window-clientes" style="display:none;">
+      <div class="section-head">
+        <h2>Base de Clientes / Empresas <span class="count" id="clientes-count"></span></h2>
+        <button class="btn btn-primary btn-sm" id="btn-nuevo-cliente">+ Nuevo Cliente</button>
+      </div>
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>Empresa / Razón Social</th><th>Entidad / Dirección / Cliente</th><th>Contacto</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="clientes-body"></tbody>
+          </table>
         </div>
+        <div class="empty-state" id="clientes-empty" style="display:none;">No hay clientes registrados.</div>
       </div>
     </div>
   </main>
@@ -665,6 +795,9 @@
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal-content"></div>
 </div>
+
+<datalist id="stock-datalist"></datalist>
+<datalist id="clientes-datalist"></datalist>
 
 <div id="toast"></div>
 <div id="print-area"></div>
@@ -692,37 +825,32 @@ const INVITE_HASH = "QmVpcm80NTkxIQ==";
 let currentUser = null;
 let pedidosCache = [];
 let solicitudesCache = [];
+let stockCache = [];
+let depositosCache = [];
+let clientesCache = [];
 let dismissedNotifs = JSON.parse(localStorage.getItem("gp_dismissed_notifs") || "[]");
 let activeNotifIds = []; 
 let itemRowIndex = 0;
 
 function checkInviteCode(input) {
-  try {
-    return btoa(input) === INVITE_HASH;
-  } catch(e) {
-    return false;
-  }
+  try { return btoa(input) === INVITE_HASH; } catch(e) { return false; }
 }
-
 function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
-
 function fmtDate(d){
   if(!d) return "—";
   const parts = String(d).split("-");
   if(parts.length===3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return d;
 }
-
 function fmtDateTime(ts){
   if(!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 }
-
 function isUrgentOrOverdue(item){
   if(item.estado !== "pendiente") return false;
   const targetDate = item.fechaEntrega || item.fechaEntregaSolicitada || item.fecha;
@@ -731,7 +859,6 @@ function isUrgentOrOverdue(item){
   const diffHours = (base.getTime() - Date.now()) / 3600000;
   return diffHours <= 48;
 }
-
 function showToast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -739,17 +866,14 @@ function showToast(msg){
   clearTimeout(showToast._t);
   showToast._t = setTimeout(()=> t.classList.remove("show"), 2600);
 }
-
 function closeModal(){
   document.getElementById("modal-overlay").classList.remove("open");
   document.getElementById("modal-content").innerHTML = "";
 }
-
 function openModal(html){
   document.getElementById("modal-content").innerHTML = html;
   document.getElementById("modal-overlay").classList.add("open");
 }
-
 document.getElementById("modal-overlay").addEventListener("click", e=>{
   if(e.target.id === "modal-overlay") closeModal();
 });
@@ -761,7 +885,6 @@ document.getElementById("tab-login-btn").addEventListener("click", ()=>{
   document.getElementById("form-auth-register").style.display = "none";
   document.getElementById("auth-error").textContent = "";
 });
-
 document.getElementById("tab-register-btn").addEventListener("click", ()=>{
   document.getElementById("tab-register-btn").classList.add("active");
   document.getElementById("tab-login-btn").classList.remove("active");
@@ -769,19 +892,16 @@ document.getElementById("tab-register-btn").addEventListener("click", ()=>{
   document.getElementById("form-auth-login").style.display = "none";
   document.getElementById("auth-error").textContent = "";
 });
-
 document.getElementById("form-auth-login").addEventListener("submit", e=>{
   e.preventDefault();
   const email = document.getElementById("login-email").value.trim();
   const pass = document.getElementById("login-password").value;
   const errEl = document.getElementById("auth-error");
   errEl.textContent = "";
-
-  auth.signInWithEmailAndPassword(email, pass).catch(err=>{
-    errEl.textContent = "Error al iniciar sesión: Datos incorrectos o usuario inexistente.";
+  auth.signInWithEmailAndPassword(email, pass).catch(()=>{
+    errEl.textContent = "Error al iniciar sesión: Datos incorrectos.";
   });
 });
-
 document.getElementById("form-auth-register").addEventListener("submit", e=>{
   e.preventDefault();
   const name = document.getElementById("reg-name").value.trim();
@@ -791,26 +911,17 @@ document.getElementById("form-auth-register").addEventListener("submit", e=>{
   const invite = document.getElementById("reg-invite").value;
   const errEl = document.getElementById("auth-error");
   errEl.textContent = "";
-
   if(!checkInviteCode(invite)){
     errEl.textContent = "Código de invitación incorrecto.";
     return;
   }
-
   auth.createUserWithEmailAndPassword(email, pass).then(cred=>{
-    return db.collection("users").doc(cred.user.uid).set({
-      label: name,
-      rol: role,
-      email: email
-    });
+    return db.collection("users").doc(cred.user.uid).set({ label: name, rol: role, email: email });
   }).catch(err=>{
     errEl.textContent = "Error al registrarse: " + err.message;
   });
 });
-
-document.getElementById("logout-btn").addEventListener("click", ()=>{
-  auth.signOut();
-});
+document.getElementById("logout-btn").addEventListener("click", ()=> auth.signOut());
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -819,18 +930,31 @@ auth.onAuthStateChanged(user=>{
         const userData = doc.data();
         currentUser = { uid: user.uid, label: userData.label, rol: userData.rol };
         startApp();
-      } else {
-        auth.signOut();
-      }
+      } else { auth.signOut(); }
     });
   } else {
     currentUser = null;
     if(unsubPedidos) unsubPedidos();
     if(unsubSolicitudes) unsubSolicitudes();
+    if(unsubStock) unsubStock();
+    if(unsubDepositos) unsubDepositos();
+    if(unsubClientes) unsubClientes();
     document.getElementById("app-screen").style.display = "none";
     document.getElementById("login-screen").style.display = "flex";
   }
 });
+
+function switchMainTab(tab) {
+  document.getElementById("main-tab-pedidos").classList.toggle("active", tab === 'pedidos');
+  document.getElementById("main-tab-stock").classList.toggle("active", tab === 'stock');
+  document.getElementById("main-tab-depositos").classList.toggle("active", tab === 'depositos');
+  document.getElementById("main-tab-clientes").classList.toggle("active", tab === 'clientes');
+
+  document.getElementById("window-pedidos").style.display = (tab === 'pedidos') ? 'block' : 'none';
+  document.getElementById("window-stock").style.display = (tab === 'stock') ? 'block' : 'none';
+  document.getElementById("window-depositos").style.display = (tab === 'depositos') ? 'block' : 'none';
+  document.getElementById("window-clientes").style.display = (tab === 'clientes') ? 'block' : 'none';
+}
 
 function startApp(){
   document.getElementById("login-screen").style.display = "none";
@@ -846,6 +970,9 @@ function startApp(){
 
   listenPedidos();
   listenSolicitudes();
+  listenStock();
+  listenDepositos();
+  listenClientes();
 }
 
 document.querySelectorAll(".tab-btn").forEach(btn=>{
@@ -861,8 +988,7 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
   });
 });
 
-let unsubPedidos = null;
-let unsubSolicitudes = null;
+let unsubPedidos = null, unsubSolicitudes = null, unsubStock = null, unsubDepositos = null, unsubClientes = null;
 
 function listenPedidos(){
   if(unsubPedidos) unsubPedidos();
@@ -870,10 +996,10 @@ function listenPedidos(){
     .onSnapshot(snap=>{
       pedidosCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderPedidos();
+      renderStock();
       updateNotifications();
     });
 }
-
 function listenSolicitudes(){
   if(unsubSolicitudes) unsubSolicitudes();
   unsubSolicitudes = db.collection("solicitudes").orderBy("createdAt","desc")
@@ -883,22 +1009,66 @@ function listenSolicitudes(){
       updateNotifications();
     });
 }
+function listenStock(){
+  if(unsubStock) unsubStock();
+  unsubStock = db.collection("stock").orderBy("nombre","asc")
+    .onSnapshot(snap=>{
+      stockCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      updateStockDatalist();
+      renderStock();
+    });
+}
+function listenDepositos(){
+  if(unsubDepositos) unsubDepositos();
+  unsubDepositos = db.collection("depositos").orderBy("nombre","asc")
+    .onSnapshot(snap=>{
+      depositosCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderDepositos();
+      updateDepositoFilterOptions();
+    });
+}
+function listenClientes(){
+  if(unsubClientes) unsubClientes();
+  unsubClientes = db.collection("clientes").orderBy("empresa","asc")
+    .onSnapshot(snap=>{
+      clientesCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderClientes();
+      updateClientesDatalist();
+    });
+}
+
+function updateDepositoFilterOptions() {
+  const filterSelect = document.getElementById("filter-deposito-select");
+  const currentVal = filterSelect.value;
+  
+  filterSelect.innerHTML = `<option value="">🔍 Todos los Depósitos</option>` +
+    depositosCache.map(d => `<option value="${escapeHtml(d.nombre)}" ${currentVal === d.nombre ? 'selected' : ''}>${escapeHtml(d.nombre)}</option>`).join("");
+}
+
+function updateStockDatalist() {
+  const dl = document.getElementById("stock-datalist");
+  dl.innerHTML = stockCache.map(s => {
+    const cantReal = parseFloat(s.cantidadReal) ?? parseFloat(s.cantidad) ?? 0;
+    const depStr = s.deposito ? ` [${s.deposito}]` : '';
+    return `<option value="${escapeHtml(s.nombre)}">${escapeHtml(s.nombre)}${depStr} - Disp: ${cantReal} ${escapeHtml(s.unidad||'')}</option>`;
+  }).join("");
+}
+
+function updateClientesDatalist() {
+  const dl = document.getElementById("clientes-datalist");
+  dl.innerHTML = clientesCache.map(c => 
+    `<option value="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)} ${c.entidad ? '(' + escapeHtml(c.entidad) + ')' : ''}</option>`
+  ).join("");
+}
 
 document.getElementById("notif-toggle").addEventListener("click", (e)=>{
   e.stopPropagation();
   document.getElementById("notif-dropdown").classList.toggle("open");
 });
-
-document.addEventListener("click", ()=>{
-  document.getElementById("notif-dropdown").classList.remove("open");
-});
-
+document.addEventListener("click", ()=> document.getElementById("notif-dropdown").classList.remove("open"));
 document.getElementById("notif-dropdown").addEventListener("click", e=>e.stopPropagation());
-
 document.getElementById("notif-clear-all").addEventListener("click", ()=>{
-  activeNotifIds.forEach(id => {
-    if(!dismissedNotifs.includes(id)) dismissedNotifs.push(id);
-  });
+  activeNotifIds.forEach(id => { if(!dismissedNotifs.includes(id)) dismissedNotifs.push(id); });
   localStorage.setItem("gp_dismissed_notifs", JSON.stringify(dismissedNotifs));
   updateNotifications();
 });
@@ -914,61 +1084,32 @@ function updateNotifications(){
       const urgent = isUrgentOrOverdue(p);
       const id = "p_urg_" + p.id;
       if(urgent && !dismissedNotifs.includes(id)){
-        notifs.push({
-          id,
-          urgent: true,
-          text: `<b>Urgente:</b> Pedido ${p.numeroPedido} vence pronto (${fmtDate(p.fechaEntrega || p.fecha)})`
-        });
+        notifs.push({ id, urgent: true, text: `<b>Urgente:</b> Pedido ${p.numeroPedido} vence pronto.` });
       } else if(!dismissedNotifs.includes("p_new_" + p.id)) {
-        notifs.push({
-          id: "p_new_" + p.id,
-          urgent: false,
-          text: `Nuevo pedido de salida recibido: ${p.numeroPedido}`
-        });
+        notifs.push({ id: "p_new_" + p.id, urgent: false, text: `Nuevo pedido de salida: ${p.numeroPedido}` });
       }
     });
-
     solicitudesCache.filter(s => s.estado === "confirmada").forEach(s => {
       const id = "s_conf_" + s.id;
-      if(!dismissedNotifs.includes(id)){
-        notifs.push({
-          id,
-          urgent: false,
-          text: `Solicitud de insumos confirmada. Llega el ${fmtDate(s.fechaLlegada)}`
-        });
-      }
+      if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent: false, text: `Solicitud confirmada. Llega el ${fmtDate(s.fechaLlegada)}` });
     });
   }
 
   if(currentUser.rol === "oficina"){
-    pedidosCache.filter(p => p.estado === "reservado").forEach(p => {
+    pedidosCache.filter(p => p.estado === "confirmado" || p.estado === "reservado").forEach(p => {
       const id = "p_res_" + p.id;
-      if(!dismissedNotifs.includes(id)){
-        notifs.push({
-          id,
-          urgent: false,
-          text: `Pedido ${p.numeroPedido} armado y reservado por depósito.`
-        });
-      }
+      if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent: false, text: `Pedido ${p.numeroPedido} procesado.` });
     });
-
     solicitudesCache.filter(s => s.estado === "pendiente").forEach(s => {
       const urgent = isUrgentOrOverdue(s);
       const id = "s_pend_" + s.id;
-      if(!dismissedNotifs.includes(id)){
-        notifs.push({
-          id,
-          urgent: urgent,
-          text: `<b>${urgent ? 'Urgente: ' : 'Nueva solicitud: '}</b>${s.solicitadoPor} requiere insumos.`
-        });
-      }
+      if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent, text: `<b>Nueva solicitud:</b> ${s.solicitadoPor}` });
     });
   }
 
   activeNotifIds = notifs.map(n => n.id);
-
   if(!notifs.length){
-    listEl.innerHTML = `<div class="empty-state" style="padding:16px;">Sin notificaciones nuevas.</div>`;
+    listEl.innerHTML = `<div class="empty-state" style="padding:16px;">Sin notificaciones.</div>`;
     badgeEl.style.display = "none";
   } else {
     badgeEl.style.display = "flex";
@@ -981,7 +1122,6 @@ function updateNotifications(){
     `).join("");
   }
 }
-
 window.dismissNotif = function(id){
   if(!dismissedNotifs.includes(id)){
     dismissedNotifs.push(id);
@@ -995,9 +1135,7 @@ window.pedirPinAccion = function(id, accion){
     <h3>Código de seguridad</h3>
     <p class="modal-sub">Ingrese el código para ${accion} el pedido.</p>
     <form id="form-pin">
-      <div class="field">
-        <input type="password" id="pin-input" required autofocus>
-      </div>
+      <div class="field"><input type="password" id="pin-input" required autofocus></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
         <button type="submit" class="btn btn-primary">Aceptar</button>
@@ -1006,29 +1144,20 @@ window.pedirPinAccion = function(id, accion){
   `);
   document.getElementById("form-pin").addEventListener("submit", e=>{
     e.preventDefault();
-    const pin = document.getElementById("pin-input").value;
-    if(pin === "4591"){
+    if(document.getElementById("pin-input").value === "4591"){
       if(accion === "eliminar"){
-        db.collection("pedidos").doc(id).delete().then(()=>{
-          showToast("Pedido eliminado correctamente.");
-          closeModal();
-        }).catch(()=>showToast("Error al eliminar el pedido."));
-      } else if(accion === "editar"){
-        abrirFormularioPedido(id);
-      }
-    } else {
-      showToast("Código incorrecto.");
-    }
+        db.collection("pedidos").doc(id).delete().then(()=>{ showToast("Pedido eliminado."); closeModal(); });
+      } else if(accion === "editar"){ abrirFormularioPedido(id); }
+    } else { showToast("Código incorrecto."); }
   });
 };
 
 function itemsResumen(items){
   if(!items || !items.length) return '<span class="muted">—</span>';
   return '<div class="items-mini">' + items.map(it=>
-    `<div>${escapeHtml(it.item)} — ${escapeHtml(it.cantidad)} ${escapeHtml(it.unidad||"")}</div>`
+    `<div>${escapeHtml(it.item)} — ${escapeHtml(it.cantidad)} ${escapeHtml(it.unidad||"")} ${it.stockId ? '<span class="badge badge-reservado" style="font-size:9px;">Reservado</span>' : ''}</div>`
   ).join("") + '</div>';
 }
-
 function renderItemsBlock(p){
   if(p.tipoPedido === "eco"){
     return `<div class="eco-block"><span>Remito</span>${itemsResumen(p.itemsRemito)}</div>
@@ -1051,23 +1180,24 @@ function renderPedidosOficina(){
   empty.style.display="none";
 
   body.innerHTML = pedidosCache.map(p=>{
-    const isPendiente = p.estado === "pendiente";
-    const badge = isPendiente
-      ? '<span class="badge badge-pendiente">Pendiente</span>'
-      : '<span class="badge badge-reservado">Reservado</span>';
+    const isPendiente = p.estado === "pendiente" || p.estado === "reservado";
+    const badge = p.estado === "confirmado"
+      ? '<span class="badge badge-confirmada">Confirmado</span>'
+      : (p.estado === "reservado" ? '<span class="badge badge-reservado">Reservado</span>' : '<span class="badge badge-pendiente">Pendiente</span>');
     const ecoBadge = p.tipoPedido === "eco" ? '<span class="badge badge-eco">Eco</span>' : "";
     
     return `<tr>
-      <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${p.numeroSPR ? `<div class="muted" style="font-size:11px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
+      <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}</td>
       <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
       <td>${fmtDate(p.fecha)}</td>
       <td>${fmtDate(p.fechaEntrega)}</td>
       <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
       <td>${badge}</td>
       <td>
-        ${!isPendiente ? `<button class="expand-link" style="margin-bottom:6px;" onclick="verDetalleSenasa('${p.id}')">Ver datos SENASA</button><br>` : ''}
+        ${!isPendiente ? `<button class="expand-link" style="margin-bottom:6px;" onclick="verDetalleSenasa('${p.id}')">Ver SENASA</button><br>` : ''}
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
-          ${isPendiente ? `<button class="btn btn-primary btn-sm" onclick="pedirPinAccion('${p.id}', 'editar')">Editar</button><button class="btn btn-danger btn-sm" onclick="pedirPinAccion('${p.id}', 'eliminar')">Eliminar</button>` : ''}
+          <button class="btn btn-primary btn-sm" onclick="pedirPinAccion('${p.id}', 'editar')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="pedirPinAccion('${p.id}', 'eliminar')">Eliminar</button>
           <button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button>
         </div>
       </td>
@@ -1076,14 +1206,8 @@ function renderPedidosOficina(){
 }
 
 function renderPedidosDeposito(){
-  const pendientes = pedidosCache.filter(p=>p.estado==="pendiente")
-    .sort((a,b)=> (a.fechaEntrega||a.fecha||"").localeCompare(b.fechaEntrega||b.fecha||""));
-  const reservados = pedidosCache.filter(p=>p.estado==="reservado")
-    .sort((a,b)=>{
-      const ta = a.fechaArmado && a.fechaArmado.toMillis ? a.fechaArmado.toMillis() : 0;
-      const tb = b.fechaArmado && b.fechaArmado.toMillis ? b.fechaArmado.toMillis() : 0;
-      return tb-ta;
-    });
+  const pendientes = pedidosCache.filter(p=>p.estado==="pendiente" || p.estado==="reservado");
+  const confirmados = pedidosCache.filter(p=>p.estado==="confirmado");
 
   document.getElementById("de-pendientes-count").textContent = pendientes.length ? `(${pendientes.length})` : "";
   const pBody = document.getElementById("de-pendientes-body");
@@ -1094,27 +1218,31 @@ function renderPedidosDeposito(){
     pBody.innerHTML = pendientes.map(p=>{
       const overdue = isUrgentOrOverdue(p);
       const ecoBadge = p.tipoPedido === "eco" ? '<span class="badge badge-eco">Eco</span>' : "";
+      const badgeEstado = p.estado === "reservado" ? '<span class="badge badge-reservado">Reservado</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
+
       return `<tr class="${overdue ? "row-alerta":""}">
-        <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge}${overdue ? '<div class="alerta-flag">Urgente (-48hs)</div>' : ""}${p.numeroSPR ? `<div class="muted" style="font-size:11px;">SPR ${escapeHtml(p.numeroSPR)}</div>` : ""}</td>
+        <td><strong>${escapeHtml(p.numeroPedido)}</strong> ${ecoBadge} ${badgeEstado}</td>
         <td>${escapeHtml(p.empresa)}<br><span class="muted">${escapeHtml(p.entidad||"")}</span></td>
         <td>${fmtDate(p.fecha)}</td>
         <td>${fmtDate(p.fechaEntrega)}</td>
         <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">Armado y reservado</button><br>
+          <button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">✓ Confirmar</button><br>
+          <button class="btn btn-secondary btn-sm" style="margin-top:4px;" onclick="abrirFormularioPedido('${p.id}')">✏️ Editar</button><br>
+          <button class="btn btn-danger btn-sm" style="margin-top:4px;" onclick="abrirSolicitarFaltantes('${p.id}')">+ Pedir</button><br>
           <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="imprimirPedido('${p.id}')">Imprimir</button>
         </td>
       </tr>`;
     }).join("");
   }
 
-  document.getElementById("de-reservados-count").textContent = reservados.length ? `(${reservados.length})` : "";
+  document.getElementById("de-reservados-count").textContent = confirmados.length ? `(${confirmados.length})` : "";
   const rBody = document.getElementById("de-reservados-body");
   const rEmpty = document.getElementById("de-reservados-empty");
-  if(!reservados.length){ rBody.innerHTML=""; rEmpty.style.display="block"; }
+  if(!confirmados.length){ rBody.innerHTML=""; rEmpty.style.display="block"; }
   else{
     rEmpty.style.display="none";
-    rBody.innerHTML = reservados.map(p=>`<tr>
+    rBody.innerHTML = confirmados.map(p=>`<tr>
       <td><strong>${escapeHtml(p.numeroPedido)}</strong></td>
       <td>${escapeHtml(p.empresa)}</td>
       <td>${escapeHtml(p.numeroChofer||"—")} / ${escapeHtml(p.matricula||"—")}</td>
@@ -1125,6 +1253,235 @@ function renderPedidosDeposito(){
   }
 }
 
+function renderStock(){
+  const body = document.getElementById("stock-body");
+  const empty = document.getElementById("stock-empty");
+  const selectedDeposito = document.getElementById("filter-deposito-select").value;
+
+  let filteredStock = stockCache;
+  if(selectedDeposito) {
+    filteredStock = stockCache.filter(s => (s.deposito || "") === selectedDeposito);
+  }
+
+  document.getElementById("stock-count").textContent = filteredStock.length ? `(${filteredStock.length})` : "";
+  if(!filteredStock.length){ body.innerHTML=""; empty.style.display="block"; return; }
+  empty.style.display="none";
+
+  const reservasMap = {};
+  pedidosCache.forEach(p => {
+    if(p.estado === "pendiente" || p.estado === "reservado") {
+      let itemsList = [];
+      if(p.tipoPedido === 'eco') { if(p.itemsEntrega) itemsList = itemsList.concat(p.itemsEntrega); }
+      else { if(p.items) itemsList = itemsList.concat(p.items); }
+      itemsList.forEach(it => {
+        if(it.stockId) reservasMap[it.stockId] = (reservasMap[it.stockId] || 0) + (parseFloat(it.cantidad) || 0);
+      });
+    }
+  });
+
+  body.innerHTML = filteredStock.map(s => {
+    const cantReal = parseFloat(s.cantidadReal) ?? parseFloat(s.cantidad) ?? 0;
+    const cantReservada = reservasMap[s.id] || 0;
+    const cantConfirmada = parseFloat(s.cantidadConfirmada) || 0;
+    const cantDisponible = cantReal - cantReservada;
+
+    return `<tr>
+      <td><strong>${escapeHtml(s.nombre)}</strong></td>
+      <td><span class="badge" style="background:#EBEFF2;">${escapeHtml(s.deposito || "General")}</span></td>
+      <td>${escapeHtml(s.unidad || "UN")}</td>
+      <td><strong>${cantReal}</strong></td>
+      <td><span class="badge badge-reservado">${cantReservada}</span></td>
+      <td><strong style="color:${cantDisponible < 0 ? 'var(--alerta)' : 'var(--ok)'};">${cantDisponible}</strong></td>
+      <td><span class="badge badge-confirmada">${cantConfirmada}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="abrirAjusteStock('${s.id}')">Ajustar</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarStockProducto('${s.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarStockProducto('${s.id}')">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function renderDepositos(){
+  const body = document.getElementById("depositos-body");
+  const empty = document.getElementById("depositos-empty");
+  document.getElementById("depositos-count").textContent = depositosCache.length ? `(${depositosCache.length})` : "";
+  if(!depositosCache.length){ body.innerHTML=""; empty.style.display="block"; return; }
+  empty.style.display="none";
+
+  body.innerHTML = depositosCache.map(d => `
+    <tr>
+      <td><strong>${escapeHtml(d.nombre)}</strong></td>
+      <td>${escapeHtml(d.direccion || '—')}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="editarDeposito('${d.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarDeposito('${d.id}')">Eliminar</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function renderClientes(){
+  const body = document.getElementById("clientes-body");
+  const empty = document.getElementById("clientes-empty");
+  document.getElementById("clientes-count").textContent = clientesCache.length ? `(${clientesCache.length})` : "";
+  if(!clientesCache.length){ body.innerHTML=""; empty.style.display="block"; return; }
+  empty.style.display="none";
+
+  body.innerHTML = clientesCache.map(c => `
+    <tr>
+      <td><strong>${escapeHtml(c.empresa)}</strong></td>
+      <td>${escapeHtml(c.entidad || '—')}</td>
+      <td>${escapeHtml(c.contacto || '—')}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="editarCliente('${c.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarCliente('${c.id}')">Eliminar</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+/* MODALES Y GESTIÓN DE STOCK */
+document.getElementById("btn-nuevo-stock-prod").addEventListener("click", () => abrirFormularioStock());
+function abrirFormularioStock(idToEdit = null) {
+  const prod = idToEdit ? stockCache.find(x => x.id === idToEdit) : null;
+  const depOpts = depositosCache.map(d => 
+    `<option value="${escapeHtml(d.nombre)}" ${prod?.deposito === d.nombre ? 'selected' : ''}>${escapeHtml(d.nombre)}</option>`
+  ).join("");
+
+  openModal(`
+    <h3>${prod ? 'Editar Producto' : 'Nuevo Producto'}</h3>
+    <form id="form-stock-prod">
+      <div class="field"><label>Nombre del Producto</label><input type="text" id="st-nombre" value="${escapeHtml(prod?.nombre || '')}" required></div>
+      <div class="field">
+        <label>Depósito / Ubicación</label>
+        <select id="st-deposito">
+          <option value="">-- Seleccionar Depósito --</option>
+          ${depOpts}
+        </select>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Cantidad Real (Física)</label><input type="number" step="any" id="st-cantidad" value="${escapeHtml(prod?.cantidadReal ?? prod?.cantidad ?? 0)}" required></div>
+        <div class="field"><label>Unidad de Medida</label><input type="text" id="st-unidad" value="${escapeHtml(prod?.unidad || 'KG')}" required></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  `);
+  document.getElementById("form-stock-prod").addEventListener("submit", e => {
+    e.preventDefault();
+    const payload = {
+      nombre: document.getElementById("st-nombre").value.trim(),
+      deposito: document.getElementById("st-deposito").value.trim(),
+      cantidadReal: parseFloat(document.getElementById("st-cantidad").value) || 0,
+      unidad: document.getElementById("st-unidad").value.trim()
+    };
+    if(idToEdit) {
+      db.collection("stock").doc(idToEdit).update(payload).then(() => { showToast("Actualizado."); closeModal(); });
+    } else {
+      payload.cantidadConfirmada = 0;
+      db.collection("stock").add(payload).then(() => { showToast("Agregado."); closeModal(); });
+    }
+  });
+}
+window.editarStockProducto = function(id) { abrirFormularioStock(id); };
+window.eliminarStockProducto = function(id) {
+  if(confirm("¿Eliminar producto del stock?")) db.collection("stock").doc(id).delete().then(() => showToast("Eliminado."));
+};
+window.abrirAjusteStock = function(id) {
+  const s = stockCache.find(x => x.id === id);
+  if(!s) return;
+  openModal(`
+    <h3>Ajustar Stock: ${escapeHtml(s.nombre)}</h3>
+    <form id="form-ajuste-stock">
+      <div class="field"><label>Operación</label>
+        <select id="st-op"><option value="sumar">Sumar</option><option value="descontar">Restar</option><option value="fijar">Fijar Exacto</option></select>
+      </div>
+      <div class="field"><label>Cantidad</label><input type="number" step="any" id="st-cant-op" required></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Aplicar</button></div>
+    </form>
+  `);
+  document.getElementById("form-ajuste-stock").addEventListener("submit", e => {
+    e.preventDefault();
+    const op = document.getElementById("st-op").value;
+    const cant = parseFloat(document.getElementById("st-cant-op").value) || 0;
+    let actual = parseFloat(s.cantidadReal) || 0;
+    let nuevo = op === "descontar" ? actual - cant : (op === "sumar" ? actual + cant : cant);
+    db.collection("stock").doc(id).update({ cantidadReal: Math.max(0, nuevo) }).then(() => { showToast("Ajustado."); closeModal(); });
+  });
+};
+
+/* MODALES Y GESTIÓN DE DEPÓSITOS */
+document.getElementById("btn-nuevo-deposito").addEventListener("click", () => abrirFormularioDeposito());
+function abrirFormularioDeposito(idToEdit = null) {
+  const dep = idToEdit ? depositosCache.find(x => x.id === idToEdit) : null;
+  openModal(`
+    <h3>${dep ? 'Editar Depósito' : 'Nuevo Depósito'}</h3>
+    <form id="form-deposito">
+      <div class="field"><label>Nombre del Depósito</label><input type="text" id="dep-nombre" value="${escapeHtml(dep?.nombre || '')}" placeholder="Ej: Moreno, Beiró 4591" required></div>
+      <div class="field"><label>Ubicación / Dirección</label><input type="text" id="dep-direccion" value="${escapeHtml(dep?.direccion || '')}" placeholder="Opcional"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  `);
+  document.getElementById("form-deposito").addEventListener("submit", e => {
+    e.preventDefault();
+    const payload = {
+      nombre: document.getElementById("dep-nombre").value.trim(),
+      direccion: document.getElementById("dep-direccion").value.trim()
+    };
+    if(idToEdit) {
+      db.collection("depositos").doc(idToEdit).update(payload).then(() => { showToast("Depósito actualizado."); closeModal(); });
+    } else {
+      db.collection("depositos").add(payload).then(() => { showToast("Depósito guardado."); closeModal(); });
+    }
+  });
+}
+window.editarDeposito = function(id) { abrirFormularioDeposito(id); };
+window.eliminarDeposito = function(id) {
+  if(confirm("¿Seguro que querés eliminar este depósito?")) db.collection("depositos").doc(id).delete().then(() => showToast("Depósito eliminado."));
+};
+
+/* MODALES Y GESTIÓN DE CLIENTES */
+document.getElementById("btn-nuevo-cliente").addEventListener("click", () => abrirFormularioCliente());
+function abrirFormularioCliente(idToEdit = null) {
+  const cli = idToEdit ? clientesCache.find(x => x.id === idToEdit) : null;
+  openModal(`
+    <h3>${cli ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
+    <form id="form-cliente">
+      <div class="field"><label>Empresa / Razón Social</label><input type="text" id="cli-empresa" value="${escapeHtml(cli?.empresa || '')}" required></div>
+      <div class="field"><label>Entidad / Cliente / Sucursal</label><input type="text" id="cli-entidad" value="${escapeHtml(cli?.entidad || '')}"></div>
+      <div class="field"><label>Contacto / Teléfono</label><input type="text" id="cli-contacto" value="${escapeHtml(cli?.contacto || '')}"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  `);
+  document.getElementById("form-cliente").addEventListener("submit", e => {
+    e.preventDefault();
+    const payload = {
+      empresa: document.getElementById("cli-empresa").value.trim(),
+      entidad: document.getElementById("cli-entidad").value.trim(),
+      contacto: document.getElementById("cli-contacto").value.trim()
+    };
+    if(idToEdit) {
+      db.collection("clientes").doc(idToEdit).update(payload).then(() => { showToast("Cliente actualizado."); closeModal(); });
+    } else {
+      db.collection("clientes").add(payload).then(() => { showToast("Cliente guardado."); closeModal(); });
+    }
+  });
+}
+window.editarCliente = function(id) { abrirFormularioCliente(id); };
+window.eliminarCliente = function(id) {
+  if(confirm("¿Eliminar cliente?")) db.collection("clientes").doc(id).delete().then(() => showToast("Cliente eliminado."));
+};
+
+/* IMPRESIÓN DE NOTA DE PEDIDO ORIGINAL */
 window.imprimirPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
@@ -1184,184 +1541,87 @@ window.imprimirPedido = function(id){
   window.print();
 };
 
-window.imprimirSolicitud = function(id){
-  const s = solicitudesCache.find(x=>x.id===id);
-  if(!s) return;
-
-  const prodsHtml = (s.productos||[]).map(p=>
-    `<tr><td>${escapeHtml(p.producto)}</td><td>${escapeHtml(p.cantidad)}</td></tr>`
-  ).join("");
-
-  document.getElementById("print-area").innerHTML = `
-    <div class="nota-pedido">
-      <div class="np-print-title">SOLICITUD DE MERCADERÍA / INSUMOS</div>
-      <table class="np-print-head" style="margin-top:14px;">
-        <tr>
-          <td class="np-print-lbl">SOLICITADO POR:</td>
-          <td>${escapeHtml(s.solicitadoPor||"")}</td>
-          <td class="np-print-lbl right">ESTADO:</td>
-          <td class="np-print-val bold">${escapeHtml((s.estado||"").toUpperCase())}</td>
-        </tr>
-        <tr>
-          <td class="np-print-lbl">FECHA ENT. DESEADA:</td>
-          <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
-          <td class="np-print-lbl right">FECHA LLEGADA:</td>
-          <td class="np-print-val bold">${fmtDate(s.fechaLlegada)}</td>
-        </tr>
-      </table>
-      <table class="np-print-items" style="margin-top:14px;">
-        <thead><tr><th>PRODUCTO / INSUMO</th><th>CANTIDAD</th></tr></thead>
-        <tbody>${prodsHtml}</tbody>
-      </table>
-      ${s.aclaracion ? `
-        <table class="np-print-aclaracion" style="margin-top:14px;">
-          <tr><td class="np-print-section">ACLARACIÓN DEL DEPÓSITO</td></tr>
-          <tr><td class="np-print-box">${escapeHtml(s.aclaracion)}</td></tr>
-        </table>
-      ` : ""}
-      ${s.productosFinales ? `
-        <table class="np-print-aclaracion" style="margin-top:14px;">
-          <tr><td class="np-print-section">RESPUESTA DE COMPRAS / OFICINA</td></tr>
-          <tr><td class="np-print-box highlight">${escapeHtml(s.productosFinales)}</td></tr>
-        </table>
-      ` : ""}
-    </div>`;
-
-  window.print();
-};
-
 window.verDetalleSenasa = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
   openModal(`
     <h3>Pedido ${escapeHtml(p.numeroPedido)}</h3>
-    <p class="modal-sub">Datos confirmados por depósito para SENASA.</p>
     <div class="detail-block">
       <div class="d-row"><span>Empresa</span><span>${escapeHtml(p.empresa)}</span></div>
       <div class="d-row"><span>Entidad</span><span>${escapeHtml(p.entidad||"—")}</span></div>
-      <div class="d-row"><span>N° de SPR</span><span>${escapeHtml(p.numeroSPR||"—")}</span></div>
-      <div class="d-row"><span>Tipo de pedido</span><span>${p.tipoPedido === "eco" ? "Eco" : "Normal"}</span></div>
-      <div class="d-row"><span>Fecha de entrega</span><span>${fmtDate(p.fechaEntrega)}</span></div>
-      <div class="d-row"><span>Matrícula</span><span>${escapeHtml(p.matricula||"—")}</span></div>
-      <div class="d-row"><span>N° de chofer</span><span>${escapeHtml(p.numeroChofer||"—")}</span></div>
-      <div class="d-row"><span>Armado el</span><span>${fmtDateTime(p.fechaArmado)}</span></div>
     </div>
-    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:12px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
-    <div class="field">
-      <label>Productos finales</label>
-      ${renderItemsBlock(p)}
-    </div>
-    <div class="field">
-      <label>Aclaración del depósito</label>
-      <div class="detail-block" style="margin-bottom:0;">${escapeHtml(p.aclaracion||"Sin aclaraciones.")}</div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
-      <button class="btn btn-primary" onclick="imprimirPedido('${p.id}')">Imprimir</button>
-    </div>
+    <div class="field"><label>Productos</label>${renderItemsBlock(p)}</div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
   `);
 };
 
 function readItemsFrom(containerId){
-  return Array.from(document.querySelectorAll(`#${containerId} .item-row`)).map(row=>({
-    item: row.querySelector(".np-item").value.trim(),
-    cantidad: row.querySelector(".np-cant").value,
-    unidad: row.querySelector(".np-unidad").value.trim()
-  })).filter(it=>it.item);
+  return Array.from(document.querySelectorAll(`#${containerId} .item-row`)).map(row=>{
+    const nameInp = row.querySelector(".np-item");
+    const val = nameInp.value.trim();
+    const stockId = nameInp.dataset.stockId || "";
+    return { stockId: stockId || null, item: val, cantidad: row.querySelector(".np-cant").value, unidad: row.querySelector(".np-unidad").value.trim() };
+  }).filter(it=>it.item);
 }
 
 function siguienteNumeroPedido(){
   let max = ULTIMO_NUMERO_REGISTRADO;
   pedidosCache.forEach(p=>{
     const match = String(p.numeroPedido || "").match(/(\d+)/);
-    if(match){
-      const n = parseInt(match[1], 10);
-      if(!isNaN(n) && n > max) max = n;
-    }
+    if(match){ const n = parseInt(match[1], 10); if(n > max) max = n; }
   });
   return "PED-" + String(max + 1).padStart(4, "0");
 }
 
 window.abrirFormularioPedido = function(idToEdit = null) {
-  let p = null;
-  if(idToEdit){
-    p = pedidosCache.find(x => x.id === idToEdit);
-    if(!p) return;
-  }
-  
-  itemRowIndex = 0;
+  let p = idToEdit ? pedidosCache.find(x => x.id === idToEdit) : null;
   const numActual = p ? p.numeroPedido : siguienteNumeroPedido();
-  const titulo = p ? "Editar pedido de salida" : "Nuevo pedido de salida";
-  const subtitulo = p ? `Modificando ${escapeHtml(p.numeroPedido)}` : "Se enviará directamente al panel del depósito.";
   const isEco = p ? (p.tipoPedido === "eco") : false;
 
   openModal(`
-    <h3>${titulo}</h3>
-    <p class="modal-sub">${subtitulo}</p>
+    <h3>${p ? 'Editar Pedido' : 'Nuevo Pedido'}</h3>
     <form id="form-nuevo-pedido">
       <div class="row-2">
-        <div class="field"><label>Empresa</label><input type="text" id="np-empresa" value="${escapeHtml(p?.empresa||'')}" required></div>
-        <div class="field"><label>N° de pedido</label><input type="text" id="np-numero" class="readonly-field" readonly value="${escapeHtml(numActual)}"></div>
+        <div class="field">
+          <label>Empresa / Cliente</label>
+          <input type="text" list="clientes-datalist" id="np-empresa" value="${escapeHtml(p?.empresa||'')}" placeholder="🔍 Buscar o escribir empresa..." oninput="onSelectClienteInput(this)" required>
+        </div>
+        <div class="field"><label>N° pedido</label><input type="text" id="np-numero" readonly value="${escapeHtml(numActual)}"></div>
       </div>
       <div class="row-2">
         <div class="field"><label>Entidad (datos del cliente)</label><input type="text" id="np-entidad" value="${escapeHtml(p?.entidad||'')}"></div>
-        <div class="field"><label>SPR</label><input type="text" id="np-spr" placeholder="Si corresponde" value="${escapeHtml(p?.numeroSPR||'')}"></div>
+        <div class="field"><label>SPR</label><input type="text" id="np-spr" value="${escapeHtml(p?.numeroSPR||'')}"></div>
       </div>
       <div class="row-2">
         <div class="field"><label>Fecha</label><input type="date" id="np-fecha" value="${escapeHtml(p?.fecha||'')}" required></div>
-        <div class="field"><label>Fecha de entrega</label><input type="date" id="np-fecha-entrega" value="${escapeHtml(p?.fechaEntrega||'')}"></div>
+        <div class="field"><label>Entrega</label><input type="date" id="np-fecha-entrega" value="${escapeHtml(p?.fechaEntrega||'')}"></div>
       </div>
-
-      <div class="field">
-        <label>Tipo de pedido</label>
+      <div class="field"><label>Tipo de Pedido</label>
         <div class="tipo-toggle">
-          <label class="tipo-opt ${!isEco?'active':''}" data-val="normal"><input type="radio" name="np-tipo" value="normal" ${!isEco?'checked':''}> Normal</label>
-          <label class="tipo-opt ${isEco?'active':''}" data-val="eco"><input type="radio" name="np-tipo" value="eco" ${isEco?'checked':''}> Eco</label>
+          <label class="tipo-opt ${!isEco?'active':''}"><input type="radio" name="np-tipo" value="normal" ${!isEco?'checked':''}> Normal</label>
+          <label class="tipo-opt ${isEco?'active':''}"><input type="radio" name="np-tipo" value="eco" ${isEco?'checked':''}> Eco</label>
         </div>
       </div>
-
       <div id="np-bloque-normal" style="display:${!isEco?'block':'none'};">
-        <div class="field">
-          <label>Ítems</label>
-          <div class="items-repeater" id="np-items"></div>
-          <button type="button" class="add-row-btn" id="np-add-row">+ Agregar ítem</button>
-        </div>
+        <div class="items-repeater" id="np-items"></div>
+        <button type="button" class="add-row-btn" id="np-add-row">+ Agregar ítem</button>
       </div>
-
       <div id="np-bloque-eco" style="display:${isEco?'block':'none'};">
-        <div class="field">
-          <label>Remito</label>
-          <div class="items-repeater" id="np-items-remito"></div>
-          <button type="button" class="add-row-btn" id="np-add-row-remito">+ Agregar ítem</button>
-        </div>
-        <div class="field">
-          <label>Entrega</label>
-          <div class="items-repeater" id="np-items-entrega"></div>
-          <button type="button" class="add-row-btn" id="np-add-row-entrega">+ Agregar ítem</button>
-        </div>
+        <label>Remito</label><div class="items-repeater" id="np-items-remito"></div><button type="button" class="add-row-btn" id="np-add-row-remito">+ Agregar Remito</button>
+        <label style="margin-top:8px;">Entrega</label><div class="items-repeater" id="np-items-entrega"></div><button type="button" class="add-row-btn" id="np-add-row-entrega">+ Agregar Entrega</button>
       </div>
-
-      <div class="field">
-        <label>Aclaraciones de oficina</label>
-        <textarea id="np-aclaracion-oficina" placeholder="Cualquier observación que deba ver el depósito">${escapeHtml(p?.aclaracionOficina||'')}</textarea>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">${p ? "Guardar cambios" : "Enviar pedido"}</button>
-      </div>
+      <div class="field" style="margin-top:10px;"><label>Aclaraciones de Oficina</label><textarea id="np-aclaracion-oficina">${escapeHtml(p?.aclaracionOficina||'')}</textarea></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Guardar Pedido</button></div>
     </form>
   `);
 
-  const itemsBox = document.getElementById("np-items");
-  const remitoBox = document.getElementById("np-items-remito");
-  const entregaBox = document.getElementById("np-items-entrega");
-
-  function _addItemHtml(container, it = {item:'', cantidad:'', unidad:''}) {
-    container.insertAdjacentHTML("beforeend", `<div class="item-row" data-idx="${itemRowIndex++}">
-      <input type="text" placeholder="Ítem" class="np-item" value="${escapeHtml(it.item)}" required>
-      <input type="number" placeholder="Cant." min="0" step="any" class="np-cant" value="${escapeHtml(it.cantidad)}" required>
-      <input type="text" placeholder="Unidad" class="np-unidad" value="${escapeHtml(it.unidad)}">
+  const itemsBox = document.getElementById("np-items"), remitoBox = document.getElementById("np-items-remito"), entregaBox = document.getElementById("np-items-entrega");
+  
+  function _addItemHtml(container, it = {item:'', cantidad:'', unidad:'', stockId: ''}) {
+    container.insertAdjacentHTML("beforeend", `<div class="item-row">
+      <input type="text" list="stock-datalist" class="np-item" value="${escapeHtml(it.item)}" data-stock-id="${it.stockId||''}" placeholder="🔍 Buscar producto en stock..." oninput="onSearchStockInput(this)" required>
+      <input type="number" step="any" class="np-cant" value="${escapeHtml(it.cantidad)}" placeholder="Cant" required>
+      <input type="text" class="np-unidad" value="${escapeHtml(it.unidad)}" placeholder="Unidad">
       <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
     </div>`);
   }
@@ -1373,7 +1633,6 @@ window.abrirFormularioPedido = function(idToEdit = null) {
       if(p.itemsEntrega) p.itemsEntrega.forEach(it => _addItemHtml(entregaBox, it));
     }
   }
-  
   if(!itemsBox.children.length) _addItemHtml(itemsBox);
   if(!remitoBox.children.length) _addItemHtml(remitoBox);
   if(!entregaBox.children.length) _addItemHtml(entregaBox);
@@ -1381,35 +1640,20 @@ window.abrirFormularioPedido = function(idToEdit = null) {
   document.getElementById("np-add-row").addEventListener("click", ()=> _addItemHtml(itemsBox));
   document.getElementById("np-add-row-remito").addEventListener("click", ()=> _addItemHtml(remitoBox));
   document.getElementById("np-add-row-entrega").addEventListener("click", ()=> _addItemHtml(entregaBox));
-  
   if(!p) document.getElementById("np-fecha").valueAsDate = new Date();
-
-  const bNormal = document.getElementById("np-bloque-normal");
-  const bEco = document.getElementById("np-bloque-eco");
-
-  if(isEco) {
-    bNormal.querySelectorAll("input").forEach(inp => inp.disabled = true);
-  } else {
-    bEco.querySelectorAll("input").forEach(inp => inp.disabled = true);
-  }
 
   document.querySelectorAll('input[name="np-tipo"]').forEach(r=>{
     r.addEventListener("change", ()=>{
       const val = document.querySelector('input[name="np-tipo"]:checked').value;
-      bNormal.style.display = val === "normal" ? "block" : "none";
-      bEco.style.display = val === "eco" ? "block" : "none";
-
-      bNormal.querySelectorAll("input").forEach(inp => inp.disabled = (val === "eco"));
-      bEco.querySelectorAll("input").forEach(inp => inp.disabled = (val === "normal"));
-
-      document.querySelectorAll(".tipo-opt").forEach(l=> l.classList.toggle("active", l.dataset.val === val));
+      document.getElementById("np-bloque-normal").style.display = val === "normal" ? "block" : "none";
+      document.getElementById("np-bloque-eco").style.display = val === "eco" ? "block" : "none";
     });
   });
 
   document.getElementById("form-nuevo-pedido").addEventListener("submit", e=>{
     e.preventDefault();
     const tipo = document.querySelector('input[name="np-tipo"]:checked').value;
-
+    let tieneReserva = false;
     const payload = {
       empresa: document.getElementById("np-empresa").value.trim(),
       numeroSPR: document.getElementById("np-spr").value.trim(),
@@ -1420,251 +1664,197 @@ window.abrirFormularioPedido = function(idToEdit = null) {
       tipoPedido: tipo,
       aclaracionOficina: document.getElementById("np-aclaracion-oficina").value.trim()
     };
-
     if(tipo === "eco"){
-      const itemsRemito = readItemsFrom("np-items-remito");
-      const itemsEntrega = readItemsFrom("np-items-entrega");
-      if(!itemsRemito.length && !itemsEntrega.length){ showToast("Agregá al menos un ítem."); return; }
-      payload.itemsRemito = itemsRemito;
-      payload.itemsEntrega = itemsEntrega;
-      if(idToEdit) payload.items = firebase.firestore.FieldValue.delete();
+      payload.itemsRemito = readItemsFrom("np-items-remito");
+      payload.itemsEntrega = readItemsFrom("np-items-entrega");
+      tieneReserva = payload.itemsEntrega.some(i => i.stockId);
     } else {
-      const items = readItemsFrom("np-items");
-      if(!items.length){ showToast("Agregá al menos un ítem."); return; }
-      payload.items = items;
-      if(idToEdit) {
-        payload.itemsRemito = firebase.firestore.FieldValue.delete();
-        payload.itemsEntrega = firebase.firestore.FieldValue.delete();
-      }
+      payload.items = readItemsFrom("np-items");
+      tieneReserva = payload.items.some(i => i.stockId);
     }
+    payload.estado = tieneReserva ? "reservado" : (p ? p.estado : "pendiente");
 
     if(idToEdit) {
-      db.collection("pedidos").doc(idToEdit).update(payload).then(()=>{
-        showToast("Pedido actualizado exitosamente.");
-        closeModal();
-      }).catch(()=>{
-        showToast("No se pudo actualizar el pedido.");
-      });
+      db.collection("pedidos").doc(idToEdit).update(payload).then(()=>{ showToast("Actualizado."); closeModal(); });
     } else {
-      payload.estado = "pendiente";
       payload.creadoPor = currentUser.label;
       payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      db.collection("pedidos").add(payload).then(()=>{
-        showToast("Pedido enviado al depósito.");
-        closeModal();
-      }).catch(()=>{
-        showToast("No se pudo guardar el pedido.");
-      });
+      db.collection("pedidos").add(payload).then(()=>{ showToast("Creado."); closeModal(); });
     }
   });
 };
 
+window.onSelectClienteInput = function(inputEl) {
+  const val = inputEl.value.trim();
+  const cli = clientesCache.find(c => c.empresa.toLowerCase() === val.toLowerCase());
+  if(cli && cli.entidad) {
+    const entidadInp = document.getElementById("np-entidad");
+    if(entidadInp && !entidadInp.value) entidadInp.value = cli.entidad;
+  }
+};
+
+window.onSearchStockInput = function(inputEl) {
+  const row = inputEl.closest('.item-row');
+  const unidadInp = row.querySelector('.np-unidad');
+  const val = inputEl.value.trim();
+  
+  const matchedOpt = stockCache.find(s => {
+    const nameWithDep = `${s.nombre}${s.deposito ? ` [${s.deposito}]` : ''}`;
+    return s.nombre.toLowerCase() === val.toLowerCase() || nameWithDep.toLowerCase() === val.toLowerCase();
+  });
+
+  if(matchedOpt) {
+    inputEl.dataset.stockId = matchedOpt.id;
+    if(matchedOpt.unidad) unidadInp.value = matchedOpt.unidad;
+  } else {
+    delete inputEl.dataset.stockId;
+  }
+};
+
 document.getElementById("btn-nuevo-pedido").addEventListener("click", () => abrirFormularioPedido(null));
+
+window.abrirSolicitarFaltantes = function(pedidoId) {
+  const p = pedidosCache.find(x => x.id === pedidoId);
+  if(!p) return;
+  openModal(`
+    <h3>Solicitar Faltantes</h3>
+    <form id="form-pedir-insumos">
+      <div class="items-repeater" id="pf-items"></div>
+      <button type="button" class="add-row-btn" id="pf-add-row">+ Producto</button>
+      <div class="field" style="margin-top:10px;"><label>Fecha de entrega</label><input type="date" id="pf-fecha" required value="${p.fechaEntrega || ''}"></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Enviar Nota</button></div>
+    </form>
+  `);
+  const itemsBox = document.getElementById("pf-items");
+  function addPfRow(prodName = '', cant = '') {
+    itemsBox.insertAdjacentHTML("beforeend", `<div class="item-row"><input type="text" class="ns-prod" value="${escapeHtml(prodName)}" required><input type="text" class="ns-cant" value="${escapeHtml(cant)}" required><button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button></div>`);
+  }
+  let pItems = p.tipoPedido === 'eco' ? p.itemsEntrega : p.items;
+  if(pItems && pItems.length) pItems.forEach(it => addPfRow(it.item, it.cantidad));
+  else addPfRow();
+  document.getElementById("pf-add-row").addEventListener("click", () => addPfRow());
+  document.getElementById("form-pedir-insumos").addEventListener("submit", e => {
+    e.preventDefault();
+    const productos = Array.from(document.querySelectorAll("#pf-items .item-row")).map(row=>({
+      producto: row.querySelector(".ns-prod").value.trim(), cantidad: row.querySelector(".ns-cant").value.trim()
+    })).filter(pr=>pr.producto);
+    db.collection("solicitudes").add({
+      pedidoOrigen: p.numeroPedido, productos, fechaEntregaSolicitada: document.getElementById("pf-fecha").value,
+      estado: "pendiente", solicitadoPor: currentUser.label, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(()=>{ showToast("Enviado."); closeModal(); });
+  });
+};
 
 window.abrirArmarPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
   openModal(`
-    <h3>Marcar pedido ${escapeHtml(p.numeroPedido)} como armado</h3>
-    <p class="modal-sub">${escapeHtml(p.empresa)} — ${escapeHtml(p.entidad||"")}</p>
-    ${p.aclaracionOficina ? `<div class="nota-oficina" style="margin-bottom:12px;"><strong>Aclaración de oficina:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
-    <div class="field"><label>Ítems del pedido</label>${renderItemsBlock(p)}</div>
+    <h3>Confirmar Pedido ${escapeHtml(p.numeroPedido)}</h3>
     <form id="form-armar-pedido">
       <div class="row-2">
-        <div class="field"><label>Matrícula del vehículo</label><input type="text" id="ap-matricula" required></div>
-        <div class="field"><label>N° de chofer</label><input type="text" id="ap-chofer" required></div>
+        <div class="field"><label>Matrícula</label><input type="text" id="ap-matricula" required></div>
+        <div class="field"><label>Chofer</label><input type="text" id="ap-chofer" required></div>
       </div>
-      <div class="field">
-        <label>Aclaración (cambios de producto, faltantes, etc.)</label>
-        <textarea id="ap-aclaracion" placeholder="Opcional"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" onclick="imprimirPedido('${p.id}')">Imprimir</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Confirmar armado y reservado</button>
-      </div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Confirmar y Descontar Stock</button></div>
     </form>
   `);
   document.getElementById("form-armar-pedido").addEventListener("submit", e=>{
     e.preventDefault();
-    db.collection("pedidos").doc(id).update({
-      estado: "reservado",
-      matricula: document.getElementById("ap-matricula").value.trim(),
-      numeroChofer: document.getElementById("ap-chofer").value.trim(),
-      aclaracion: document.getElementById("ap-aclaracion").value.trim(),
-      armadoPor: currentUser.label,
-      fechaArmado: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(()=>{
-      showToast("Pedido marcado como armado y reservado.");
-      closeModal();
-    }).catch(err=>{
-      showToast("No se pudo actualizar el pedido.");
+    let itemsToProcess = p.tipoPedido === 'eco' ? (p.itemsEntrega || []) : (p.items || []);
+    itemsToProcess.forEach(it => {
+      if(it.stockId) {
+        const cant = parseFloat(it.cantidad) || 0;
+        const stItem = stockCache.find(s => s.id === it.stockId);
+        if(stItem) {
+          const actualReal = parseFloat(stItem.cantidadReal) ?? parseFloat(stItem.cantidad) ?? 0;
+          const actualConf = parseFloat(stItem.cantidadConfirmada) || 0;
+          db.collection("stock").doc(it.stockId).update({ 
+            cantidadReal: Math.max(0, actualReal - cant),
+            cantidadConfirmada: actualConf + cant
+          });
+        }
+      }
     });
+    db.collection("pedidos").doc(id).update({
+      estado: "confirmado", matricula: document.getElementById("ap-matricula").value.trim(),
+      numeroChofer: document.getElementById("ap-chofer").value.trim(),
+      armadoPor: currentUser.label, fechaArmado: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(()=>{ showToast("Confirmado."); closeModal(); });
   });
 };
 
 function productosResumen(productos){
   if(!productos || !productos.length) return '<span class="muted">—</span>';
-  return '<div class="items-mini">' + productos.map(pr=>
-    `<div>${escapeHtml(pr.producto)} — ${escapeHtml(pr.cantidad)}</div>`
-  ).join("") + '</div>';
+  return '<div class="items-mini">' + productos.map(pr=>`<div>${escapeHtml(pr.producto)} — ${escapeHtml(pr.cantidad)}</div>`).join("") + '</div>';
 }
-
 function renderSolicitudes(){
   if(!currentUser) return;
   if(currentUser.rol === "oficina") renderSolicitudesOficina();
   if(currentUser.rol === "deposito") renderSolicitudesDeposito();
 }
-
 function renderSolicitudesOficina(){
-  const body = document.getElementById("of-solicitudes-body");
-  const empty = document.getElementById("of-solicitudes-empty");
+  const body = document.getElementById("of-solicitudes-body"), empty = document.getElementById("of-solicitudes-empty");
   document.getElementById("of-solicitudes-count").textContent = solicitudesCache.length ? `(${solicitudesCache.length})` : "";
   if(!solicitudesCache.length){ body.innerHTML=""; empty.style.display="block"; return; }
   empty.style.display="none";
-
   body.innerHTML = solicitudesCache.map(s=>{
-    const overdue = isUrgentOrOverdue(s);
-    const badge = s.estado === "confirmada"
-      ? '<span class="badge badge-confirmada">Confirmada</span>'
-      : '<span class="badge badge-pendiente">Pendiente</span>';
-    const accion = s.estado === "pendiente"
-      ? `<button class="btn btn-primary btn-sm" onclick="abrirGestionarSolicitud('${s.id}')">Gestionar compra</button>`
-      : `<span class="muted">Llega: ${fmtDate(s.fechaLlegada)}</span>`;
-    return `<tr class="${overdue ? "row-alerta":""}">
-      <td>
-        <strong>${escapeHtml(s.solicitadoPor)}</strong><br>
-        <span class="muted">${fmtDate(s.fechaEntregaSolicitada)} solicitado</span>
-        ${overdue ? '<div class="alerta-flag">Urgente (-48hs)</div>' : ""}
-      </td>
-      <td>${productosResumen(s.productos)}${s.aclaracion ? `<div class="muted" style="margin-top:4px;">${escapeHtml(s.aclaracion)}</div>`:""}</td>
-      <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
-      <td>${badge}</td>
-      <td>
-        ${accion}
-        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="imprimirSolicitud('${s.id}')">Imprimir</button>
-      </td>
-    </tr>`;
+    const badge = s.estado === "confirmada" ? '<span class="badge badge-confirmada">Confirmada</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
+    const accion = s.estado === "pendiente" ? `<button class="btn btn-primary btn-sm" onclick="abrirGestionarSolicitud('${s.id}')">Gestionar</button>` : '';
+    return `<tr><td><strong>${escapeHtml(s.solicitadoPor)}</strong></td><td>${productosResumen(s.productos)}</td><td>${fmtDate(s.fechaEntregaSolicitada)}</td><td>${badge}</td><td>${accion}</td></tr>`;
   }).join("");
 }
-
 function renderSolicitudesDeposito(){
-  const mias = solicitudesCache;
-  const body = document.getElementById("de-solicitudes-body");
-  const empty = document.getElementById("de-solicitudes-empty");
-  document.getElementById("de-solicitudes-count").textContent = mias.length ? `(${mias.length})` : "";
-  if(!mias.length){ body.innerHTML=""; empty.style.display="block"; return; }
+  const body = document.getElementById("de-solicitudes-body"), empty = document.getElementById("de-solicitudes-empty");
+  document.getElementById("de-solicitudes-count").textContent = solicitudesCache.length ? `(${solicitudesCache.length})` : "";
+  if(!solicitudesCache.length){ body.innerHTML=""; empty.style.display="block"; return; }
   empty.style.display="none";
-
-  body.innerHTML = mias.map(s=>{
-    const badge = s.estado === "confirmada"
-      ? '<span class="badge badge-confirmada">Confirmada</span>'
-      : '<span class="badge badge-pendiente">Pendiente</span>';
-    const respuesta = s.estado === "confirmada"
-      ? `<div><strong>${escapeHtml(s.productosFinales||"—")}</strong></div><div class="muted">Llega: ${fmtDate(s.fechaLlegada)}</div>`
-      : '<span class="muted">Esperando respuesta de oficina</span>';
-    return `<tr>
-      <td>${productosResumen(s.productos)}${s.aclaracion ? `<div class="muted" style="margin-top:4px;">${escapeHtml(s.aclaracion)}</div>`:""}<div class="muted" style="margin-top:4px;">Pedido por: ${escapeHtml(s.solicitadoPor)}</div></td>
-      <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
-      <td>${badge}</td>
-      <td>${respuesta}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="imprimirSolicitud('${s.id}')">Imprimir</button></td>
-    </tr>`;
+  body.innerHTML = solicitudesCache.map(s=>{
+    const badge = s.estado === "confirmada" ? '<span class="badge badge-confirmada">Confirmada</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
+    const respuesta = s.estado === "confirmada" ? `<div><b>${escapeHtml(s.productosFinales)}</b></div>` : '<span class="muted">Esperando</span>';
+    return `<tr><td>${productosResumen(s.productos)}</td><td>${fmtDate(s.fechaEntregaSolicitada)}</td><td>${badge}</td><td>${respuesta}</td><td>—</td></tr>`;
   }).join("");
-}
-
-let prodRowIndex = 0;
-function prodRowHtml(idx){
-  return `<div class="item-row" style="grid-template-columns:2fr 1fr auto;" data-idx="${idx}">
-    <input type="text" placeholder="Producto / insumo" class="ns-prod" required>
-    <input type="text" placeholder="Cantidad" class="ns-cant" required>
-    <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
-  </div>`;
 }
 
 document.getElementById("btn-nueva-solicitud").addEventListener("click", ()=>{
-  prodRowIndex = 0;
   openModal(`
-    <h3>Nueva solicitud de insumos</h3>
-    <p class="modal-sub">Se enviará a oficina para su gestión de compra.</p>
+    <h3>Nueva Solicitud</h3>
     <form id="form-nueva-solicitud">
-      <div class="field">
-        <label>Productos</label>
-        <div class="items-repeater" id="ns-items"></div>
-        <button type="button" class="add-row-btn" id="ns-add-row">+ Agregar producto</button>
-      </div>
-      <div class="field"><label>Aclaración</label><textarea id="ns-aclaracion" placeholder="Opcional"></textarea></div>
-      <div class="field"><label>Fecha de entrega solicitada</label><input type="date" id="ns-fecha" required></div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Enviar solicitud</button>
-      </div>
+      <div class="items-repeater" id="ns-items"><div class="item-row"><input type="text" class="ns-prod" placeholder="Producto" required><input type="text" class="ns-cant" placeholder="Cant" required><button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button></div></div>
+      <button type="button" class="add-row-btn" id="ns-add-row">+ Producto</button>
+      <div class="field" style="margin-top:10px;"><label>Fecha</label><input type="date" id="ns-fecha" required></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Enviar</button></div>
     </form>
   `);
-  const itemsBox = document.getElementById("ns-items");
-  itemsBox.insertAdjacentHTML("beforeend", prodRowHtml(prodRowIndex++));
   document.getElementById("ns-add-row").addEventListener("click", ()=>{
-    itemsBox.insertAdjacentHTML("beforeend", prodRowHtml(prodRowIndex++));
+    document.getElementById("ns-items").insertAdjacentHTML("beforeend", `<div class="item-row"><input type="text" class="ns-prod" placeholder="Producto" required><input type="text" class="ns-cant" placeholder="Cant" required><button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button></div>`);
   });
-
   document.getElementById("form-nueva-solicitud").addEventListener("submit", e=>{
     e.preventDefault();
     const productos = Array.from(document.querySelectorAll("#ns-items .item-row")).map(row=>({
-      producto: row.querySelector(".ns-prod").value.trim(),
-      cantidad: row.querySelector(".ns-cant").value.trim()
+      producto: row.querySelector(".ns-prod").value.trim(), cantidad: row.querySelector(".ns-cant").value.trim()
     })).filter(p=>p.producto);
-
-    if(!productos.length){ showToast("Agregá al menos un producto."); return; }
-
     db.collection("solicitudes").add({
-      productos,
-      aclaracion: document.getElementById("ns-aclaracion").value.trim(),
-      fechaEntregaSolicitada: document.getElementById("ns-fecha").value,
-      estado: "pendiente",
-      solicitadoPor: currentUser.label,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(()=>{
-      showToast("Solicitud enviada a oficina.");
-      closeModal();
-    }).catch(err=>{
-      showToast("No se pudo guardar la solicitud.");
-    });
+      productos, fechaEntregaSolicitada: document.getElementById("ns-fecha").value,
+      estado: "pendiente", solicitadoPor: currentUser.label, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(()=>{ showToast("Enviado."); closeModal(); });
   });
 });
 
 window.abrirGestionarSolicitud = function(id){
-  const s = solicitudesCache.find(x=>x.id===id);
-  if(!s) return;
   openModal(`
-    <h3>Gestionar solicitud</h3>
-    <p class="modal-sub">Pedida por ${escapeHtml(s.solicitadoPor)} — entrega deseada ${fmtDate(s.fechaEntregaSolicitada)}</p>
-    <div class="field"><label>Productos solicitados</label>${productosResumen(s.productos)}</div>
-    ${s.aclaracion ? `<div class="field"><label>Aclaración del depósito</label><div class="detail-block" style="margin-bottom:0;">${escapeHtml(s.aclaracion)}</div></div>` : ""}
+    <h3>Gestionar Solicitud</h3>
     <form id="form-gestionar-solicitud">
-      <div class="field">
-        <label>Productos finalmente comprados</label>
-        <textarea id="gs-finales" placeholder="Detalle de lo que se compró" required></textarea>
-      </div>
-      <div class="field"><label>Fecha de llegada estimada</label><input type="date" id="gs-llegada" required></div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Confirmar y notificar depósito</button>
-      </div>
+      <div class="field"><label>Productos Comprados</label><textarea id="gs-finales" required></textarea></div>
+      <div class="field"><label>Llegada estimada</label><input type="date" id="gs-llegada" required></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Confirmar</button></div>
     </form>
   `);
   document.getElementById("form-gestionar-solicitud").addEventListener("submit", e=>{
     e.preventDefault();
     db.collection("solicitudes").doc(id).update({
-      estado: "confirmada",
-      productosFinales: document.getElementById("gs-finales").value.trim(),
-      fechaLlegada: document.getElementById("gs-llegada").value,
-      gestionadoPor: currentUser.label
-    }).then(()=>{
-      showToast("Solicitud confirmada.");
-      closeModal();
-    }).catch(err=>{
-      showToast("No se pudo actualizar la solicitud.");
-    });
+      estado: "confirmada", productosFinales: document.getElementById("gs-finales").value.trim(),
+      fechaLlegada: document.getElementById("gs-llegada").value, gestionadoPor: currentUser.label
+    }).then(()=>{ showToast("Confirmado."); closeModal(); });
   });
 };
 </script>
