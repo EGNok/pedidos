@@ -347,7 +347,6 @@
   .badge-confirmada{background:var(--ok-soft);color:var(--ok);}
   .badge-eco{background:#EDE4F6;color:#6B3FA0;}
 
-  .field input.readonly-field{background:var(--line-soft);color:var(--ink-soft);font-weight:700;}
   .tipo-toggle{display:flex;gap:8px;}
   .tipo-opt{
     display:flex;align-items:center;gap:6px;
@@ -363,17 +362,7 @@
 
   .eco-block{margin-bottom:6px;}
   .eco-block > span{display:block;font-size:10.5px;font-weight:700;color:var(--ink-faint);margin-bottom:2px;}
-  .alerta-flag{
-    color:var(--alerta);
-    font-weight:700;
-    font-size:11px;
-    display:flex;
-    align-items:center;
-    gap:4px;
-    margin-top:4px;
-  }
-  .alerta-flag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--alerta);display:inline-block;}
-
+  
   .nota-oficina{
     background:#FFF4B8;
     border-left:3px solid #E0B400;
@@ -424,14 +413,26 @@
   }
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
+  /* ESTRUCTURA FLEXIBLE PARA EVITAR DESBORDES Y SCROLL HORIZONTAL */
   .items-repeater .item-row{
-    display:grid;grid-template-columns:2fr 1fr 1fr auto;
-    gap:6px;margin-bottom:6px;align-items:center;
+    display:flex;
+    gap:6px;
+    margin-bottom:6px;
+    align-items:center;
   }
-  .items-repeater .item-row input, .items-repeater .item-row select{padding:8px;font-size:13px;}
+  .items-repeater .item-row input {
+    padding:8px;
+    font-size:13px;
+    min-width:0;
+  }
+  .items-repeater .item-row input:nth-child(1) { flex: 2; }
+  .items-repeater .item-row input:nth-child(2) { flex: 1; max-width: 90px; }
+  .items-repeater .item-row input:nth-child(3) { flex: 1; max-width: 90px; }
+
   .row-remove{
     background:var(--line-soft);border:none;color:var(--ink-soft);
     width:32px;height:36px;border-radius:6px;cursor:pointer;font-size:14px;
+    flex-shrink:0;
   }
   .row-remove:hover{background:var(--alerta-soft);color:var(--alerta);}
   .add-row-btn{
@@ -473,8 +474,6 @@
 
   @media (max-width:640px){
     .row-2{grid-template-columns:1fr;}
-    .items-repeater .item-row{grid-template-columns:1fr 1fr auto;}
-    .items-repeater .item-row input:first-child{grid-column: span 2;}
   }
 
   /* NOTA DE PEDIDO DE IMPRESIÓN ORIGINAL RESTAURADA */
@@ -830,7 +829,6 @@ let depositosCache = [];
 let clientesCache = [];
 let dismissedNotifs = JSON.parse(localStorage.getItem("gp_dismissed_notifs") || "[]");
 let activeNotifIds = []; 
-let itemRowIndex = 0;
 
 function checkInviteCode(input) {
   try { return btoa(input) === INVITE_HASH; } catch(e) { return false; }
@@ -1341,7 +1339,6 @@ function renderClientes(){
   `).join("");
 }
 
-/* MODALES Y GESTIÓN DE STOCK */
 document.getElementById("btn-nuevo-stock-prod").addEventListener("click", () => abrirFormularioStock());
 function abrirFormularioStock(idToEdit = null) {
   const prod = idToEdit ? stockCache.find(x => x.id === idToEdit) : null;
@@ -1413,7 +1410,6 @@ window.abrirAjusteStock = function(id) {
   });
 };
 
-/* MODALES Y GESTIÓN DE DEPÓSITOS */
 document.getElementById("btn-nuevo-deposito").addEventListener("click", () => abrirFormularioDeposito());
 function abrirFormularioDeposito(idToEdit = null) {
   const dep = idToEdit ? depositosCache.find(x => x.id === idToEdit) : null;
@@ -1446,7 +1442,6 @@ window.eliminarDeposito = function(id) {
   if(confirm("¿Seguro que querés eliminar este depósito?")) db.collection("depositos").doc(id).delete().then(() => showToast("Depósito eliminado."));
 };
 
-/* MODALES Y GESTIÓN DE CLIENTES */
 document.getElementById("btn-nuevo-cliente").addEventListener("click", () => abrirFormularioCliente());
 function abrirFormularioCliente(idToEdit = null) {
   const cli = idToEdit ? clientesCache.find(x => x.id === idToEdit) : null;
@@ -1481,7 +1476,6 @@ window.eliminarCliente = function(id) {
   if(confirm("¿Eliminar cliente?")) db.collection("clientes").doc(id).delete().then(() => showToast("Cliente eliminado."));
 };
 
-/* IMPRESIÓN DE NOTA DE PEDIDO ORIGINAL */
 window.imprimirPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
@@ -1621,7 +1615,7 @@ window.abrirFormularioPedido = function(idToEdit = null) {
     container.insertAdjacentHTML("beforeend", `<div class="item-row">
       <input type="text" list="stock-datalist" class="np-item" value="${escapeHtml(it.item)}" data-stock-id="${it.stockId||''}" placeholder="🔍 Buscar producto en stock..." oninput="onSearchStockInput(this)" required>
       <input type="number" step="any" class="np-cant" value="${escapeHtml(it.cantidad)}" placeholder="Cant" required>
-      <input type="text" class="np-unidad" value="${escapeHtml(it.unidad)}" placeholder="Unidad">
+      <input type="text" class="np-unidad" value="${escapeHtml(it.unidad)}" placeholder="Unidad" required>
       <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
     </div>`);
   }
@@ -1713,6 +1707,7 @@ window.onSearchStockInput = function(inputEl) {
 
 document.getElementById("btn-nuevo-pedido").addEventListener("click", () => abrirFormularioPedido(null));
 
+/* SOLICITAR FALTANTES CON UNIDAD DE MEDIDA INCLUIDA */
 window.abrirSolicitarFaltantes = function(pedidoId) {
   const p = pedidosCache.find(x => x.id === pedidoId);
   if(!p) return;
@@ -1726,17 +1721,29 @@ window.abrirSolicitarFaltantes = function(pedidoId) {
     </form>
   `);
   const itemsBox = document.getElementById("pf-items");
-  function addPfRow(prodName = '', cant = '') {
-    itemsBox.insertAdjacentHTML("beforeend", `<div class="item-row"><input type="text" class="ns-prod" value="${escapeHtml(prodName)}" required><input type="text" class="ns-cant" value="${escapeHtml(cant)}" required><button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button></div>`);
+  
+  function addPfRow(prodName = '', cant = '', unidad = '') {
+    itemsBox.insertAdjacentHTML("beforeend", `
+      <div class="item-row">
+        <input type="text" class="ns-prod" value="${escapeHtml(prodName)}" placeholder="Producto" required>
+        <input type="number" step="any" class="ns-cant" value="${escapeHtml(cant)}" placeholder="Cant" required>
+        <input type="text" class="ns-unidad" value="${escapeHtml(unidad)}" placeholder="Unidad" required>
+        <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
+      </div>
+    `);
   }
+
   let pItems = p.tipoPedido === 'eco' ? p.itemsEntrega : p.items;
-  if(pItems && pItems.length) pItems.forEach(it => addPfRow(it.item, it.cantidad));
+  if(pItems && pItems.length) pItems.forEach(it => addPfRow(it.item, it.cantidad, it.unidad));
   else addPfRow();
+
   document.getElementById("pf-add-row").addEventListener("click", () => addPfRow());
   document.getElementById("form-pedir-insumos").addEventListener("submit", e => {
     e.preventDefault();
     const productos = Array.from(document.querySelectorAll("#pf-items .item-row")).map(row=>({
-      producto: row.querySelector(".ns-prod").value.trim(), cantidad: row.querySelector(".ns-cant").value.trim()
+      producto: row.querySelector(".ns-prod").value.trim(), 
+      cantidad: row.querySelector(".ns-cant").value.trim(),
+      unidad: row.querySelector(".ns-unidad").value.trim()
     })).filter(pr=>pr.producto);
     db.collection("solicitudes").add({
       pedidoOrigen: p.numeroPedido, productos, fechaEntregaSolicitada: document.getElementById("pf-fecha").value,
@@ -1785,7 +1792,7 @@ window.abrirArmarPedido = function(id){
 
 function productosResumen(productos){
   if(!productos || !productos.length) return '<span class="muted">—</span>';
-  return '<div class="items-mini">' + productos.map(pr=>`<div>${escapeHtml(pr.producto)} — ${escapeHtml(pr.cantidad)}</div>`).join("") + '</div>';
+  return '<div class="items-mini">' + productos.map(pr=>`<div>${escapeHtml(pr.producto)} — ${escapeHtml(pr.cantidad)} ${escapeHtml(pr.unidad||"")}</div>`).join("") + '</div>';
 }
 function renderSolicitudes(){
   if(!currentUser) return;
@@ -1819,19 +1826,35 @@ document.getElementById("btn-nueva-solicitud").addEventListener("click", ()=>{
   openModal(`
     <h3>Nueva Solicitud</h3>
     <form id="form-nueva-solicitud">
-      <div class="items-repeater" id="ns-items"><div class="item-row"><input type="text" class="ns-prod" placeholder="Producto" required><input type="text" class="ns-cant" placeholder="Cant" required><button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button></div></div>
+      <div class="items-repeater" id="ns-items">
+        <div class="item-row">
+          <input type="text" class="ns-prod" placeholder="Producto" required>
+          <input type="number" step="any" class="ns-cant" placeholder="Cant" required>
+          <input type="text" class="ns-unidad" placeholder="Unidad" required>
+          <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
+        </div>
+      </div>
       <button type="button" class="add-row-btn" id="ns-add-row">+ Producto</button>
       <div class="field" style="margin-top:10px;"><label>Fecha</label><input type="date" id="ns-fecha" required></div>
       <div class="modal-actions"><button type="submit" class="btn btn-primary">Enviar</button></div>
     </form>
   `);
   document.getElementById("ns-add-row").addEventListener("click", ()=>{
-    document.getElementById("ns-items").insertAdjacentHTML("beforeend", `<div class="item-row"><input type="text" class="ns-prod" placeholder="Producto" required><input type="text" class="ns-cant" placeholder="Cant" required><button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button></div>`);
+    document.getElementById("ns-items").insertAdjacentHTML("beforeend", `
+      <div class="item-row">
+        <input type="text" class="ns-prod" placeholder="Producto" required>
+        <input type="number" step="any" class="ns-cant" placeholder="Cant" required>
+        <input type="text" class="ns-unidad" placeholder="Unidad" required>
+        <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
+      </div>
+    `);
   });
   document.getElementById("form-nueva-solicitud").addEventListener("submit", e=>{
     e.preventDefault();
     const productos = Array.from(document.querySelectorAll("#ns-items .item-row")).map(row=>({
-      producto: row.querySelector(".ns-prod").value.trim(), cantidad: row.querySelector(".ns-cant").value.trim()
+      producto: row.querySelector(".ns-prod").value.trim(), 
+      cantidad: row.querySelector(".ns-cant").value.trim(),
+      unidad: row.querySelector(".ns-unidad").value.trim()
     })).filter(p=>p.producto);
     db.collection("solicitudes").add({
       productos, fechaEntregaSolicitada: document.getElementById("ns-fecha").value,
