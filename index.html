@@ -419,7 +419,7 @@
     margin-bottom:6px;
     align-items:center;
   }
-  .items-repeater .item-row input {
+  .items-repeater .item-row input, .items-repeater .item-row select {
     padding:8px;
     font-size:13px;
     min-width:0;
@@ -1086,9 +1086,9 @@ function updateNotifications(){
         notifs.push({ id: "p_new_" + p.id, urgent: false, text: `Nuevo pedido de salida: ${p.numeroPedido}` });
       }
     });
-    solicitudesCache.filter(s => s.estado === "confirmada").forEach(s => {
+    solicitudesCache.filter(s => s.estado === "confirmada" || s.estado === "aprobada").forEach(s => {
       const id = "s_conf_" + s.id;
-      if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent: false, text: `Solicitud confirmada. Llega el ${fmtDate(s.fechaLlegada)}` });
+      if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent: false, text: `Solicitud aprobada. Llega el ${fmtDate(s.fechaLlegada)}` });
     });
   }
 
@@ -1101,6 +1101,10 @@ function updateNotifications(){
       const urgent = isUrgentOrOverdue(s);
       const id = "s_pend_" + s.id;
       if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent, text: `<b>Nueva solicitud:</b> ${s.solicitadoPor}` });
+    });
+    solicitudesCache.filter(s => s.estado === "recibida").forEach(s => {
+      const id = "s_rec_" + s.id;
+      if(!dismissedNotifs.includes(id)) notifs.push({ id, urgent: false, text: `<b>Mercadería Recibida:</b> ${s.solicitadoPor}` });
     });
   }
 
@@ -1556,7 +1560,8 @@ window.imprimirSolicitud = function(id){
   const s = solicitudesCache.find(x=>x.id===id);
   if(!s) return;
 
-  const rows = (s.productos||[]).map(pr=>
+  const prods = s.productosAprobados || s.productos || [];
+  const rows = prods.map(pr=>
     `<tr><td>${escapeHtml(pr.producto)}</td><td>${escapeHtml(pr.cantidad)}</td><td>${escapeHtml(pr.unidad||"")}</td></tr>`
   ).join("");
 
@@ -1574,7 +1579,7 @@ window.imprimirSolicitud = function(id){
         <td class="np-print-lbl right">Estado:</td>
         <td class="np-print-val bold">${escapeHtml(s.estado||"")}</td>
       </tr>
-      ${s.productosFinales ? `<tr><td class="np-print-lbl">Productos Comprados:</td><td colspan="3">${escapeHtml(s.productosFinales)}</td></tr>` : ''}
+      ${s.comentarioOficina ? `<tr><td class="np-print-lbl">Comentario Oficina:</td><td colspan="3">${escapeHtml(s.comentarioOficina)}</td></tr>` : ''}
     </table>`;
 
   document.getElementById("print-area").innerHTML = `
@@ -1724,7 +1729,6 @@ window.abrirFormularioPedido = function(idToEdit = null) {
     });
   });
 
-  // Ejecución directa por evento click para evitar bloqueos del navegador
   document.getElementById("btn-guardar-pedido-accion").addEventListener("click", ()=>{
     const empresaVal = document.getElementById("np-empresa").value.trim();
     if(!empresaVal) {
@@ -1889,23 +1893,31 @@ function productosResumen(productos){
   if(!productos || !productos.length) return '<span class="muted">—</span>';
   return '<div class="items-mini">' + productos.map(pr=>`<div>${escapeHtml(pr.producto)} — ${escapeHtml(pr.cantidad)} ${escapeHtml(pr.unidad||"")}</div>`).join("") + '</div>';
 }
+
 function renderSolicitudes(){
   if(!currentUser) return;
   if(currentUser.rol === "oficina") renderSolicitudesOficina();
   if(currentUser.rol === "deposito") renderSolicitudesDeposito();
 }
+
 function renderSolicitudesOficina(){
   const body = document.getElementById("of-solicitudes-body"), empty = document.getElementById("of-solicitudes-empty");
   document.getElementById("of-solicitudes-count").textContent = solicitudesCache.length ? `(${solicitudesCache.length})` : "";
   if(!solicitudesCache.length){ body.innerHTML=""; empty.style.display="block"; return; }
   empty.style.display="none";
+
   body.innerHTML = solicitudesCache.map(s=>{
-    const badge = s.estado === "confirmada" ? '<span class="badge badge-confirmada">Confirmada</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
+    let badge = '<span class="badge badge-pendiente">Pendiente</span>';
+    if(s.estado === "aprobada") badge = '<span class="badge badge-reservado">En Camino / Aprobada</span>';
+    if(s.estado === "recibida") badge = '<span class="badge badge-confirmada">Recibido en Depósito</span>';
+
+    const prods = s.productosAprobados || s.productos || [];
     const accion = s.estado === "pendiente" ? `<button class="btn btn-primary btn-sm" onclick="abrirGestionarSolicitud('${s.id}')">Gestionar</button>` : '';
+
     return `<tr>
       <td><strong>${escapeHtml(s.solicitadoPor)}</strong></td>
-      <td>${productosResumen(s.productos)}</td>
-      <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+      <td>${productosResumen(prods)}</td>
+      <td>${fmtDate(s.fechaLlegada || s.fechaEntregaSolicitada)}</td>
       <td>${badge}</td>
       <td>
         ${accion}
@@ -1914,20 +1926,36 @@ function renderSolicitudesOficina(){
     </tr>`;
   }).join("");
 }
+
 function renderSolicitudesDeposito(){
   const body = document.getElementById("de-solicitudes-body"), empty = document.getElementById("de-solicitudes-empty");
   document.getElementById("de-solicitudes-count").textContent = solicitudesCache.length ? `(${solicitudesCache.length})` : "";
   if(!solicitudesCache.length){ body.innerHTML=""; empty.style.display="block"; return; }
   empty.style.display="none";
+
   body.innerHTML = solicitudesCache.map(s=>{
-    const badge = s.estado === "confirmada" ? '<span class="badge badge-confirmada">Confirmada</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
-    const respuesta = s.estado === "confirmada" ? `<div><b>${escapeHtml(s.productosFinales)}</b></div>` : '<span class="muted">Esperando</span>';
+    let badge = '<span class="badge badge-pendiente">Pendiente de Oficina</span>';
+    let accion = '';
+    
+    if(s.estado === "aprobada") {
+      badge = '<span class="badge badge-reservado">En Camino</span>';
+      accion = `<button class="btn btn-primary btn-sm" onclick="abrirRecepcionDeposito('${s.id}')">📦 Confirmar Recepción</button>`;
+    } else if(s.estado === "recibida") {
+      badge = '<span class="badge badge-confirmada">Recibido e Ingresado</span>';
+    }
+
+    const prods = s.productosAprobados || s.productos || [];
+    const respHtml = s.comentarioOficina ? `<div style="font-size:12px; color:var(--ink-soft);"><b>Oficina:</b> ${escapeHtml(s.comentarioOficina)}</div>` : '—';
+
     return `<tr>
-      <td>${productosResumen(s.productos)}</td>
-      <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+      <td>${productosResumen(prods)}</td>
+      <td>${fmtDate(s.fechaLlegada || s.fechaEntregaSolicitada)}</td>
       <td>${badge}</td>
-      <td>${respuesta}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="imprimirSolicitud('${s.id}')">Imprimir</button></td>
+      <td>${respHtml}</td>
+      <td>
+        ${accion}
+        <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="imprimirSolicitud('${s.id}')">Imprimir</button>
+      </td>
     </tr>`;
   }).join("");
 }
@@ -1945,7 +1973,7 @@ document.getElementById("btn-nueva-solicitud").addEventListener("click", ()=>{
         </div>
       </div>
       <button type="button" class="add-row-btn" id="ns-add-row">+ Producto</button>
-      <div class="field" style="margin-top:10px;"><label>Fecha</label><input type="date" id="ns-fecha" required></div>
+      <div class="field" style="margin-top:10px;"><label>Fecha Solicitada</label><input type="date" id="ns-fecha" required></div>
       <div class="modal-actions"><button type="submit" class="btn btn-primary">Enviar</button></div>
     </form>
   `);
@@ -1973,21 +2001,140 @@ document.getElementById("btn-nueva-solicitud").addEventListener("click", ()=>{
   });
 });
 
+/* GESTIÓN DE LA OFICINA AL COMPRAR/COMPROBAR EL PEDIDO */
 window.abrirGestionarSolicitud = function(id){
+  const s = solicitudesCache.find(x => x.id === id);
+  if(!s) return;
+
   openModal(`
-    <h3>Gestionar Solicitud</h3>
+    <h3>Gestionar Solicitud de ${escapeHtml(s.solicitadoPor)}</h3>
     <form id="form-gestionar-solicitud">
-      <div class="field"><label>Productos Comprados</label><textarea id="gs-finales" required></textarea></div>
-      <div class="field"><label>Llegada estimada</label><input type="date" id="gs-llegada" required></div>
-      <div class="modal-actions"><button type="submit" class="btn btn-primary">Confirmar</button></div>
+      <div class="field"><label>Productos Aprobados / a Enviar</label>
+        <div class="items-repeater" id="gs-items"></div>
+        <button type="button" class="add-row-btn" id="gs-add-row">+ Agregar Producto</button>
+      </div>
+      <div class="field"><label>Llegada estimada al Depósito</label><input type="date" id="gs-llegada" value="${s.fechaEntregaSolicitada||''}" required></div>
+      <div class="field"><label>Comentario / Instrucciones de la Oficina</label><textarea id="gs-comentario" placeholder="Ej: Se compró en proveedor X, llega en camión de la tarde."></textarea></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Aprobar y Notificar al Depósito</button></div>
     </form>
   `);
+
+  const box = document.getElementById("gs-items");
+  function addGsRow(prod = '', cant = '', unidad = '') {
+    box.insertAdjacentHTML("beforeend", `
+      <div class="item-row">
+        <input type="text" class="gs-prod" value="${escapeHtml(prod)}" placeholder="Producto" required>
+        <input type="number" step="any" class="gs-cant" value="${escapeHtml(cant)}" placeholder="Cant" required>
+        <input type="text" class="gs-unidad" value="${escapeHtml(unidad)}" placeholder="Unidad" required>
+        <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
+      </div>
+    `);
+  }
+
+  if(s.productos && s.productos.length) s.productos.forEach(p => addGsRow(p.producto, p.cantidad, p.unidad));
+  else addGsRow();
+
+  document.getElementById("gs-add-row").addEventListener("click", () => addGsRow());
+
   document.getElementById("form-gestionar-solicitud").addEventListener("submit", e=>{
     e.preventDefault();
+    const productosAprobados = Array.from(document.querySelectorAll("#gs-items .item-row")).map(row=>({
+      producto: row.querySelector(".gs-prod").value.trim(),
+      cantidad: parseFloat(row.querySelector(".gs-cant").value) || 0,
+      unidad: row.querySelector(".gs-unidad").value.trim()
+    })).filter(p => p.producto);
+
     db.collection("solicitudes").doc(id).update({
-      estado: "confirmada", productosFinales: document.getElementById("gs-finales").value.trim(),
-      fechaLlegada: document.getElementById("gs-llegada").value, gestionadoPor: currentUser.label
-    }).then(()=>{ showToast("Confirmado."); closeModal(); });
+      estado: "aprobada",
+      productosAprobados,
+      fechaLlegada: document.getElementById("gs-llegada").value,
+      comentarioOficina: document.getElementById("gs-comentario").value.trim(),
+      gestionadoPor: currentUser.label
+    }).then(()=>{ showToast("Solicitud aprobada y enviada."); closeModal(); });
+  });
+};
+
+/* RECEPCIÓN Y AJUSTE EN EL DEPÓSITO + CARGA DE STOCK */
+window.abrirRecepcionDeposito = function(id) {
+  const s = solicitudesCache.find(x => x.id === id);
+  if(!s) return;
+
+  const depOpts = depositosCache.map(d => `<option value="${escapeHtml(d.nombre)}">${escapeHtml(d.nombre)}</option>`).join("");
+  const prods = s.productosAprobados || s.productos || [];
+
+  openModal(`
+    <h3>Confirmar Recepción de Mercadería</h3>
+    <p class="modal-sub">Ajuste los valores reales recibidos y seleccione el depósito donde ingresará el stock.</p>
+    <form id="form-recepcion-deposito">
+      <div class="field">
+        <label>Depósito de Destino para ingresar Stock</label>
+        <select id="rec-deposito" required>
+          <option value="">-- Seleccionar Depósito --</option>
+          ${depOpts}
+        </select>
+      </div>
+      <div class="field"><label>Verificación e Ingreso de Ítems</label>
+        <div class="items-repeater" id="rec-items"></div>
+      </div>
+      <div class="field"><label>Observaciones del Depósito (opcional)</label><textarea id="rec-obs" placeholder="Ej: Se recibieron 20kg en lugar de 30kg por faltante del camión."></textarea></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-primary">Confirmar e Ingresar al Stock</button></div>
+    </form>
+  `);
+
+  const box = document.getElementById("rec-items");
+  prods.forEach(p => {
+    box.insertAdjacentHTML("beforeend", `
+      <div class="item-row" style="flex-wrap:wrap;">
+        <input type="text" class="rec-prod" value="${escapeHtml(p.producto)}" placeholder="Producto" required style="flex:2;">
+        <input type="number" step="any" class="rec-cant" value="${escapeHtml(p.cantidad)}" placeholder="Cant Recibida" required style="flex:1;">
+        <input type="text" class="rec-unidad" value="${escapeHtml(p.unidad||'KG')}" placeholder="Unidad" required style="flex:1;">
+        <select class="rec-estado-item" style="padding:8px; font-size:12px; flex:1;">
+          <option value="recibido">Aceptado</option>
+          <option value="devuelto">Devuelto / Rechazado</option>
+        </select>
+      </div>
+    `);
+  });
+
+  document.getElementById("form-recepcion-deposito").addEventListener("submit", e => {
+    e.preventDefault();
+    const depositoDestino = document.getElementById("rec-deposito").value.trim();
+    if(!depositoDestino) { alert("Por favor seleccione el depósito de destino."); return; }
+
+    const itemsRecibidos = Array.from(document.querySelectorAll("#rec-items .item-row")).map(row => ({
+      producto: row.querySelector(".rec-prod").value.trim(),
+      cantidad: parseFloat(row.querySelector(".rec-cant").value) || 0,
+      unidad: row.querySelector(".rec-unidad").value.trim(),
+      estadoItem: row.querySelector(".rec-estado-item").value
+    })).filter(i => i.producto);
+
+    // Sumar o agregar al stock
+    itemsRecibidos.forEach(it => {
+      if(it.estadoItem === "recibido" && it.cantidad > 0) {
+        const exist = stockCache.find(st => st.nombre.toLowerCase() === it.producto.toLowerCase() && (st.deposito || "") === depositoDestino);
+        if(exist) {
+          const actual = parseFloat(exist.cantidadReal) ?? parseFloat(exist.cantidad) ?? 0;
+          db.collection("stock").doc(exist.id).update({ cantidadReal: actual + it.cantidad });
+        } else {
+          db.collection("stock").add({
+            nombre: it.producto,
+            deposito: depositoDestino,
+            cantidadReal: it.cantidad,
+            unidad: it.unidad,
+            cantidadConfirmada: 0
+          });
+        }
+      }
+    });
+
+    db.collection("solicitudes").doc(id).update({
+      estado: "recibida",
+      productosRecibidos: itemsRecibidos,
+      depositoIngreso: depositoDestino,
+      observacionesDeposito: document.getElementById("rec-obs").value.trim(),
+      fechaRecepcion: firebase.firestore.FieldValue.serverTimestamp(),
+      recibidoPor: currentUser.label
+    }).then(() => { showToast("Stock ingresado correctamente."); closeModal(); });
   });
 };
 </script>
