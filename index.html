@@ -413,7 +413,6 @@
   }
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
-  /* ESTRUCTURA FLEXIBLE PARA EVITAR DESBORDES Y SCROLL HORIZONTAL */
   .items-repeater .item-row{
     display:flex;
     gap:6px;
@@ -476,7 +475,7 @@
     .row-2{grid-template-columns:1fr;}
   }
 
-  /* NOTA DE PEDIDO DE IMPRESIÓN ORIGINAL RESTAURADA */
+  /* ESTILOS DE IMPRESIÓN OFICIAL */
   #print-area{display:none;}
   .nota-pedido{font-family:'Inter',system-ui,sans-serif;color:#000; background:#fff;}
   .nota-pedido .np-print-title{
@@ -508,7 +507,6 @@
   .nota-pedido table.np-print-aclaracion td.np-print-box{
     border-top:none;height:80px;vertical-align:top;padding:8px;font-size:12px;
   }
-  .nota-pedido table.np-print-aclaracion td.np-print-box.highlight{background:#FFF200;}
 
   @media print {
     html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
@@ -592,7 +590,7 @@
         <span>🏢 Depósitos</span>
       </div>
       <div class="browser-tab" id="main-tab-clientes" onclick="switchMainTab('clientes')">
-        <span>👥 Clientes / Empresas</span>
+        <span>👥 Clientes / Entidades</span>
       </div>
     </div>
     <div class="who">
@@ -773,14 +771,14 @@
     <!-- VENTANA CLIENTES -->
     <div id="window-clientes" style="display:none;">
       <div class="section-head">
-        <h2>Base de Clientes / Empresas <span class="count" id="clientes-count"></span></h2>
+        <h2>Base de Clientes y Entidades <span class="count" id="clientes-count"></span></h2>
         <button class="btn btn-primary btn-sm" id="btn-nuevo-cliente">+ Nuevo Cliente</button>
       </div>
       <div class="card">
         <div class="table-responsive">
           <table>
             <thead>
-              <tr><th>Empresa / Razón Social</th><th>Entidad / Dirección / Cliente</th><th>Contacto</th><th>Acciones</th></tr>
+              <tr><th>Nombre del Cliente</th><th>Dirección / Entidad</th><th>Contacto / Teléfono</th><th>Acciones</th></tr>
             </thead>
             <tbody id="clientes-body"></tbody>
           </table>
@@ -1027,7 +1025,7 @@ function listenDepositos(){
 }
 function listenClientes(){
   if(unsubClientes) unsubClientes();
-  unsubClientes = db.collection("clientes").orderBy("empresa","asc")
+  unsubClientes = db.collection("clientes").orderBy("nombre","asc")
     .onSnapshot(snap=>{
       clientesCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
       renderClientes();
@@ -1054,9 +1052,10 @@ function updateStockDatalist() {
 
 function updateClientesDatalist() {
   const dl = document.getElementById("clientes-datalist");
-  dl.innerHTML = clientesCache.map(c => 
-    `<option value="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)} ${c.entidad ? '(' + escapeHtml(c.entidad) + ')' : ''}</option>`
-  ).join("");
+  dl.innerHTML = clientesCache.map(c => {
+    const dirStr = c.direccion ? ` — ${c.direccion}` : '';
+    return `<option value="${escapeHtml(c.nombre)}">${escapeHtml(c.nombre)}${escapeHtml(dirStr)}</option>`;
+  }).join("");
 }
 
 document.getElementById("notif-toggle").addEventListener("click", (e)=>{
@@ -1246,7 +1245,10 @@ function renderPedidosDeposito(){
       <td>${escapeHtml(p.numeroChofer||"—")} / ${escapeHtml(p.matricula||"—")}</td>
       <td>${escapeHtml(p.aclaracion||"—")}</td>
       <td>${fmtDateTime(p.fechaArmado)}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button></td>
+      <td>
+        <button class="expand-link" style="margin-bottom:4px;" onclick="verDetalleSenasa('${p.id}')">Ver SENASA</button><br>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirPedido('${p.id}')">Imprimir</button>
+      </td>
     </tr>`).join("");
   }
 }
@@ -1328,8 +1330,8 @@ function renderClientes(){
 
   body.innerHTML = clientesCache.map(c => `
     <tr>
-      <td><strong>${escapeHtml(c.empresa)}</strong></td>
-      <td>${escapeHtml(c.entidad || '—')}</td>
+      <td><strong>${escapeHtml(c.nombre)}</strong></td>
+      <td>${escapeHtml(c.direccion || '—')}</td>
       <td>${escapeHtml(c.contacto || '—')}</td>
       <td>
         <button class="btn btn-ghost btn-sm" onclick="editarCliente('${c.id}')">Editar</button>
@@ -1448,8 +1450,8 @@ function abrirFormularioCliente(idToEdit = null) {
   openModal(`
     <h3>${cli ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
     <form id="form-cliente">
-      <div class="field"><label>Empresa / Razón Social</label><input type="text" id="cli-empresa" value="${escapeHtml(cli?.empresa || '')}" required></div>
-      <div class="field"><label>Entidad / Cliente / Sucursal</label><input type="text" id="cli-entidad" value="${escapeHtml(cli?.entidad || '')}"></div>
+      <div class="field"><label>Nombre del Cliente</label><input type="text" id="cli-nombre" value="${escapeHtml(cli?.nombre || '')}" placeholder="Ej: STATE GRID" required></div>
+      <div class="field"><label>Dirección / Entidad</label><input type="text" id="cli-direccion" value="${escapeHtml(cli?.direccion || '')}" placeholder="Ej: Av. Paseo Colón 1407"></div>
       <div class="field"><label>Contacto / Teléfono</label><input type="text" id="cli-contacto" value="${escapeHtml(cli?.contacto || '')}"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
@@ -1460,8 +1462,8 @@ function abrirFormularioCliente(idToEdit = null) {
   document.getElementById("form-cliente").addEventListener("submit", e => {
     e.preventDefault();
     const payload = {
-      empresa: document.getElementById("cli-empresa").value.trim(),
-      entidad: document.getElementById("cli-entidad").value.trim(),
+      nombre: document.getElementById("cli-nombre").value.trim(),
+      direccion: document.getElementById("cli-direccion").value.trim(),
       contacto: document.getElementById("cli-contacto").value.trim()
     };
     if(idToEdit) {
@@ -1476,30 +1478,45 @@ window.eliminarCliente = function(id) {
   if(confirm("¿Eliminar cliente?")) db.collection("clientes").doc(id).delete().then(() => showToast("Cliente eliminado."));
 };
 
+/* IMPRESIÓN COMPLETA (INCLUYE CHOFER, MATRÍCULA Y DEPÓSITO) */
 window.imprimirPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
 
+  let depositoOrigen = "—";
+  let itemsCheck = p.tipoPedido === 'eco' ? (p.itemsEntrega || []).concat(p.itemsRemito || []) : (p.items || []);
+  for(let it of itemsCheck) {
+    if(it.stockId) {
+      const st = stockCache.find(s => s.id === it.stockId);
+      if(st && st.deposito) { depositoOrigen = st.deposito; break; }
+    }
+  }
+
   const headHtml = `
     <table class="np-print-head">
       <tr><td class="np-print-lbl">EMPRESA:</td><td colspan="3">${escapeHtml(p.empresa||"")}</td></tr>
-      <tr><td class="np-print-section" colspan="4">DATOS DEL CLIENTE</td></tr>
+      <tr><td class="np-print-section" colspan="4">DATOS DEL CLIENTE Y LOGÍSTICA</td></tr>
       <tr>
-        <td class="np-print-lbl italic">Entidad:</td>
+        <td class="np-print-lbl italic">Dirección / Entidad:</td>
         <td>${escapeHtml(p.entidad||"")}</td>
         <td class="np-print-lbl right">N° de Pedido:</td>
         <td class="np-print-val bold">${escapeHtml(p.numeroPedido||"")}</td>
       </tr>
       <tr>
-        <td class="np-print-lbl italic">SPR:</td>
-        <td>${escapeHtml(p.numeroSPR||"")}</td>
-        <td class="np-print-lbl right">Fecha:</td>
+        <td class="np-print-lbl italic">Chofer:</td>
+        <td>${escapeHtml(p.numeroChofer||"—")}</td>
+        <td class="np-print-lbl right">Fecha Pedido:</td>
         <td class="np-print-val bold">${fmtDate(p.fecha)}</td>
       </tr>
       <tr>
-        <td></td><td></td>
+        <td class="np-print-lbl italic">Matrícula:</td>
+        <td>${escapeHtml(p.matricula||"—")}</td>
         <td class="np-print-lbl right">Fecha Entrega:</td>
         <td class="np-print-val bold">${fmtDate(p.fechaEntrega)}</td>
+      </tr>
+      <tr>
+        <td class="np-print-lbl italic">Depósito Origen:</td>
+        <td colspan="3" class="np-print-val bold">${escapeHtml(depositoOrigen)}</td>
       </tr>
     </table>`;
 
@@ -1515,18 +1532,18 @@ window.imprimirPedido = function(id){
 
   let itemsHtml = (p.tipoPedido === "eco") 
     ? `<div class="np-print-eco-row"><div class="np-print-eco-label">REMITO</div>${itemsTable(p.itemsRemito)}</div>
-       <div class="np-print-eco-row"><div class="np-print-eco-label">ENTREGA</div>${itemsTable(p.itemsEntrega)}</div>`
+       <div class="np-print-eco-row" style="margin-top:8px;"><div class="np-print-eco-label">ENTREGA</div>${itemsTable(p.itemsEntrega)}</div>`
     : itemsTable(p.items);
 
   const aclaracionHtml = `
     <table class="np-print-aclaracion">
       <tr><td class="np-print-section">ACLARACION</td></tr>
-      <tr><td class="np-print-box${p.aclaracionOficina ? " highlight" : ""}">${escapeHtml(p.aclaracionOficina||"")}</td></tr>
+      <tr><td class="np-print-box">${escapeHtml(p.aclaracionOficina||"")}</td></tr>
     </table>`;
 
   document.getElementById("print-area").innerHTML = `
     <div class="nota-pedido">
-      <div class="np-print-title">NOTA DE PEDIDO</div>
+      <div class="np-print-title">NOTA DE PEDIDO / SENASA</div>
       ${headHtml}
       ${itemsHtml}
       ${aclaracionHtml}
@@ -1535,26 +1552,86 @@ window.imprimirPedido = function(id){
   window.print();
 };
 
+window.imprimirSolicitud = function(id){
+  const s = solicitudesCache.find(x=>x.id===id);
+  if(!s) return;
+
+  const rows = (s.productos||[]).map(pr=>
+    `<tr><td>${escapeHtml(pr.producto)}</td><td>${escapeHtml(pr.cantidad)}</td><td>${escapeHtml(pr.unidad||"")}</td></tr>`
+  ).join("");
+
+  const itemsTable = `<table class="np-print-items">
+    <thead><tr><th>PRODUCTO</th><th>CANTIDAD</th><th>UNIDAD</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  const headHtml = `
+    <table class="np-print-head">
+      <tr><td class="np-print-lbl">SOLICITADO POR:</td><td colspan="3">${escapeHtml(s.solicitadoPor||"")}</td></tr>
+      <tr>
+        <td class="np-print-lbl">Fecha de Solicitud:</td>
+        <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+        <td class="np-print-lbl right">Estado:</td>
+        <td class="np-print-val bold">${escapeHtml(s.estado||"")}</td>
+      </tr>
+      ${s.productosFinales ? `<tr><td class="np-print-lbl">Productos Comprados:</td><td colspan="3">${escapeHtml(s.productosFinales)}</td></tr>` : ''}
+    </table>`;
+
+  document.getElementById("print-area").innerHTML = `
+    <div class="nota-pedido">
+      <div class="np-print-title">SOLICITUD DE INSUMOS / FALTANTES</div>
+      ${headHtml}
+      ${itemsTable}
+    </div>`;
+
+  window.print();
+};
+
+/* VENTANA MODAL "VER SENASA" (CON DETALLE COMPLETO Y BOTÓN IMPRIMIR) */
 window.verDetalleSenasa = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
+
+  let depositoOrigen = "—";
+  let itemsCheck = p.tipoPedido === 'eco' ? (p.itemsEntrega || []).concat(p.itemsRemito || []) : (p.items || []);
+  for(let it of itemsCheck) {
+    if(it.stockId) {
+      const st = stockCache.find(s => s.id === it.stockId);
+      if(st && st.deposito) { depositoOrigen = st.deposito; break; }
+    }
+  }
+
   openModal(`
     <h3>Pedido ${escapeHtml(p.numeroPedido)}</h3>
     <div class="detail-block">
       <div class="d-row"><span>Empresa</span><span>${escapeHtml(p.empresa)}</span></div>
-      <div class="d-row"><span>Entidad</span><span>${escapeHtml(p.entidad||"—")}</span></div>
+      <div class="d-row"><span>Dirección / Entidad</span><span>${escapeHtml(p.entidad||"—")}</span></div>
+      <div class="d-row"><span>Depósito de Origen</span><span>${escapeHtml(depositoOrigen)}</span></div>
+      <div class="d-row"><span>Chofer</span><span>${escapeHtml(p.numeroChofer||"—")}</span></div>
+      <div class="d-row"><span>Matrícula</span><span>${escapeHtml(p.matricula||"—")}</span></div>
     </div>
-    <div class="field"><label>Productos</label>${renderItemsBlock(p)}</div>
-    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
+    <div class="field"><label>Productos / Ítems</label>${renderItemsBlock(p)}</div>
+    ${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir Nota Completa</button>
+      <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
+    </div>
   `);
 };
 
 function readItemsFrom(containerId){
   return Array.from(document.querySelectorAll(`#${containerId} .item-row`)).map(row=>{
-    const nameInp = row.querySelector(".np-item");
-    const val = nameInp.value.trim();
-    const stockId = nameInp.dataset.stockId || "";
-    return { stockId: stockId || null, item: val, cantidad: row.querySelector(".np-cant").value, unidad: row.querySelector(".np-unidad").value.trim() };
+    const nameInp = row.querySelector(".np-item-input");
+    const val = nameInp ? nameInp.value.trim() : "";
+    const stockId = nameInp ? (nameInp.dataset.stockId || "") : "";
+    const cantInp = row.querySelector(".np-cant-input");
+    const unidadInp = row.querySelector(".np-unidad-input");
+    return { 
+      stockId: stockId || null, 
+      item: val, 
+      cantidad: cantInp ? cantInp.value : "", 
+      unidad: unidadInp ? unidadInp.value.trim() : "" 
+    };
   }).filter(it=>it.item);
 }
 
@@ -1577,13 +1654,16 @@ window.abrirFormularioPedido = function(idToEdit = null) {
     <form id="form-nuevo-pedido">
       <div class="row-2">
         <div class="field">
-          <label>Empresa / Cliente</label>
-          <input type="text" list="clientes-datalist" id="np-empresa" value="${escapeHtml(p?.empresa||'')}" placeholder="🔍 Buscar o escribir empresa..." oninput="onSelectClienteInput(this)" required>
+          <label>Empresa</label>
+          <input type="text" id="np-empresa" value="${escapeHtml(p?.empresa||'')}" placeholder="Escribir nombre de empresa..." required>
         </div>
         <div class="field"><label>N° pedido</label><input type="text" id="np-numero" readonly value="${escapeHtml(numActual)}"></div>
       </div>
       <div class="row-2">
-        <div class="field"><label>Entidad (datos del cliente)</label><input type="text" id="np-entidad" value="${escapeHtml(p?.entidad||'')}"></div>
+        <div class="field">
+          <label>Entidad (datos del cliente)</label>
+          <input type="text" list="clientes-datalist" id="np-entidad" value="${escapeHtml(p?.entidad||'')}" placeholder="🔍 Buscar o escribir cliente..." oninput="onSelectClienteEntidadInput(this)">
+        </div>
         <div class="field"><label>SPR</label><input type="text" id="np-spr" value="${escapeHtml(p?.numeroSPR||'')}"></div>
       </div>
       <div class="row-2">
@@ -1605,7 +1685,7 @@ window.abrirFormularioPedido = function(idToEdit = null) {
         <label style="margin-top:8px;">Entrega</label><div class="items-repeater" id="np-items-entrega"></div><button type="button" class="add-row-btn" id="np-add-row-entrega">+ Agregar Entrega</button>
       </div>
       <div class="field" style="margin-top:10px;"><label>Aclaraciones de Oficina</label><textarea id="np-aclaracion-oficina">${escapeHtml(p?.aclaracionOficina||'')}</textarea></div>
-      <div class="modal-actions"><button type="submit" class="btn btn-primary">Guardar Pedido</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-primary" id="btn-guardar-pedido-accion">Guardar Pedido</button></div>
     </form>
   `);
 
@@ -1613,9 +1693,9 @@ window.abrirFormularioPedido = function(idToEdit = null) {
   
   function _addItemHtml(container, it = {item:'', cantidad:'', unidad:'', stockId: ''}) {
     container.insertAdjacentHTML("beforeend", `<div class="item-row">
-      <input type="text" list="stock-datalist" class="np-item" value="${escapeHtml(it.item)}" data-stock-id="${it.stockId||''}" placeholder="🔍 Buscar producto en stock..." oninput="onSearchStockInput(this)" required>
-      <input type="number" step="any" class="np-cant" value="${escapeHtml(it.cantidad)}" placeholder="Cant" required>
-      <input type="text" class="np-unidad" value="${escapeHtml(it.unidad)}" placeholder="Unidad" required>
+      <input type="text" list="stock-datalist" class="np-item-input" value="${escapeHtml(it.item)}" data-stock-id="${it.stockId||''}" placeholder="🔍 Buscar producto en stock..." oninput="onSearchStockInput(this)">
+      <input type="number" step="any" class="np-cant-input" value="${escapeHtml(it.cantidad)}" placeholder="Cant">
+      <input type="text" class="np-unidad-input" value="${escapeHtml(it.unidad)}" placeholder="Unidad">
       <button type="button" class="row-remove" onclick="this.closest('.item-row').remove()">✕</button>
     </div>`);
   }
@@ -1644,12 +1724,18 @@ window.abrirFormularioPedido = function(idToEdit = null) {
     });
   });
 
-  document.getElementById("form-nuevo-pedido").addEventListener("submit", e=>{
-    e.preventDefault();
+  // Ejecución directa por evento click para evitar bloqueos del navegador
+  document.getElementById("btn-guardar-pedido-accion").addEventListener("click", ()=>{
+    const empresaVal = document.getElementById("np-empresa").value.trim();
+    if(!empresaVal) {
+      alert("Por favor completa el campo Empresa.");
+      return;
+    }
+
     const tipo = document.querySelector('input[name="np-tipo"]:checked').value;
     let tieneReserva = false;
     const payload = {
-      empresa: document.getElementById("np-empresa").value.trim(),
+      empresa: empresaVal,
       numeroSPR: document.getElementById("np-spr").value.trim(),
       entidad: document.getElementById("np-entidad").value.trim(),
       numeroPedido: numActual,
@@ -1658,6 +1744,7 @@ window.abrirFormularioPedido = function(idToEdit = null) {
       tipoPedido: tipo,
       aclaracionOficina: document.getElementById("np-aclaracion-oficina").value.trim()
     };
+
     if(tipo === "eco"){
       payload.itemsRemito = readItemsFrom("np-items-remito");
       payload.itemsEntrega = readItemsFrom("np-items-entrega");
@@ -1669,37 +1756,46 @@ window.abrirFormularioPedido = function(idToEdit = null) {
     payload.estado = tieneReserva ? "reservado" : (p ? p.estado : "pendiente");
 
     if(idToEdit) {
-      db.collection("pedidos").doc(idToEdit).update(payload).then(()=>{ showToast("Actualizado."); closeModal(); });
+      db.collection("pedidos").doc(idToEdit).update(payload)
+        .then(()=>{ showToast("Actualizado."); closeModal(); })
+        .catch(err => alert("Error al actualizar: " + err.message));
     } else {
       payload.creadoPor = currentUser.label;
       payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      db.collection("pedidos").add(payload).then(()=>{ showToast("Creado."); closeModal(); });
+      db.collection("pedidos").add(payload)
+        .then(()=>{ showToast("Pedido guardado exitosamente."); closeModal(); })
+        .catch(err => alert("Error al guardar en Firestore: " + err.message));
     }
   });
 };
 
-window.onSelectClienteInput = function(inputEl) {
+window.onSelectClienteEntidadInput = function(inputEl) {
   const val = inputEl.value.trim();
-  const cli = clientesCache.find(c => c.empresa.toLowerCase() === val.toLowerCase());
-  if(cli && cli.entidad) {
-    const entidadInp = document.getElementById("np-entidad");
-    if(entidadInp && !entidadInp.value) entidadInp.value = cli.entidad;
+  const cli = clientesCache.find(c => {
+    const full = `${c.nombre}${c.direccion ? ` — ${c.direccion}` : ''}`;
+    return c.nombre.toLowerCase() === val.toLowerCase() || full.toLowerCase() === val.toLowerCase();
+  });
+  if(cli) {
+    inputEl.value = `${cli.nombre}${cli.direccion ? ' (' + cli.direccion + ')' : ''}`;
   }
 };
 
 window.onSearchStockInput = function(inputEl) {
   const row = inputEl.closest('.item-row');
-  const unidadInp = row.querySelector('.np-unidad');
-  const val = inputEl.value.trim();
+  const unidadInp = row.querySelector('.np-unidad-input');
+  let val = inputEl.value.trim();
   
+  if(val.includes(" [")) {
+    val = val.split(" [")[0].trim();
+  }
+
   const matchedOpt = stockCache.find(s => {
-    const nameWithDep = `${s.nombre}${s.deposito ? ` [${s.deposito}]` : ''}`;
-    return s.nombre.toLowerCase() === val.toLowerCase() || nameWithDep.toLowerCase() === val.toLowerCase();
+    return s.nombre.toLowerCase() === val.toLowerCase();
   });
 
   if(matchedOpt) {
     inputEl.dataset.stockId = matchedOpt.id;
-    if(matchedOpt.unidad) unidadInp.value = matchedOpt.unidad;
+    if(matchedOpt.unidad && !unidadInp.value) unidadInp.value = matchedOpt.unidad;
   } else {
     delete inputEl.dataset.stockId;
   }
@@ -1707,7 +1803,6 @@ window.onSearchStockInput = function(inputEl) {
 
 document.getElementById("btn-nuevo-pedido").addEventListener("click", () => abrirFormularioPedido(null));
 
-/* SOLICITAR FALTANTES CON UNIDAD DE MEDIDA INCLUIDA */
 window.abrirSolicitarFaltantes = function(pedidoId) {
   const p = pedidosCache.find(x => x.id === pedidoId);
   if(!p) return;
@@ -1807,7 +1902,16 @@ function renderSolicitudesOficina(){
   body.innerHTML = solicitudesCache.map(s=>{
     const badge = s.estado === "confirmada" ? '<span class="badge badge-confirmada">Confirmada</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
     const accion = s.estado === "pendiente" ? `<button class="btn btn-primary btn-sm" onclick="abrirGestionarSolicitud('${s.id}')">Gestionar</button>` : '';
-    return `<tr><td><strong>${escapeHtml(s.solicitadoPor)}</strong></td><td>${productosResumen(s.productos)}</td><td>${fmtDate(s.fechaEntregaSolicitada)}</td><td>${badge}</td><td>${accion}</td></tr>`;
+    return `<tr>
+      <td><strong>${escapeHtml(s.solicitadoPor)}</strong></td>
+      <td>${productosResumen(s.productos)}</td>
+      <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+      <td>${badge}</td>
+      <td>
+        ${accion}
+        <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="imprimirSolicitud('${s.id}')">Imprimir</button>
+      </td>
+    </tr>`;
   }).join("");
 }
 function renderSolicitudesDeposito(){
@@ -1818,7 +1922,13 @@ function renderSolicitudesDeposito(){
   body.innerHTML = solicitudesCache.map(s=>{
     const badge = s.estado === "confirmada" ? '<span class="badge badge-confirmada">Confirmada</span>' : '<span class="badge badge-pendiente">Pendiente</span>';
     const respuesta = s.estado === "confirmada" ? `<div><b>${escapeHtml(s.productosFinales)}</b></div>` : '<span class="muted">Esperando</span>';
-    return `<tr><td>${productosResumen(s.productos)}</td><td>${fmtDate(s.fechaEntregaSolicitada)}</td><td>${badge}</td><td>${respuesta}</td><td>—</td></tr>`;
+    return `<tr>
+      <td>${productosResumen(s.productos)}</td>
+      <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+      <td>${badge}</td>
+      <td>${respuesta}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="imprimirSolicitud('${s.id}')">Imprimir</button></td>
+    </tr>`;
   }).join("");
 }
 
