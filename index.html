@@ -398,7 +398,7 @@
     background:var(--surface);
     border-radius:14px;
     width:100%;
-    max-width:560px;
+    max-width:680px;
     max-height:90vh;
     overflow-y:auto;
     padding:20px;
@@ -416,17 +416,19 @@
   .items-repeater .item-row{
     display:flex;
     gap:6px;
-    margin-bottom:6px;
+    margin-bottom:8px;
     align-items:center;
   }
   .items-repeater .item-row input, .items-repeater .item-row select {
     padding:8px;
-    font-size:13px;
+    font-size:12.5px;
     min-width:0;
+    border:1px solid var(--line);
+    border-radius:6px;
   }
   .items-repeater .item-row input:nth-child(1) { flex: 2; }
-  .items-repeater .item-row input:nth-child(2) { flex: 1; max-width: 90px; }
-  .items-repeater .item-row input:nth-child(3) { flex: 1; max-width: 90px; }
+  .items-repeater .item-row input:nth-child(2) { flex: 1; max-width: 80px; }
+  .items-repeater .item-row input:nth-child(3) { flex: 1; max-width: 80px; }
 
   .row-remove{
     background:var(--line-soft);border:none;color:var(--ink-soft);
@@ -716,7 +718,7 @@
       </div>
     </div>
 
-    <!-- VENTANA STOCK -->
+    
     <div id="window-stock" style="display:none;">
       <div class="section-head">
         <h2>Inventario y Control de Stock <span class="count" id="stock-count"></span></h2>
@@ -1481,7 +1483,7 @@ window.eliminarCliente = function(id) {
   if(confirm("¿Eliminar cliente?")) db.collection("clientes").doc(id).delete().then(() => showToast("Cliente eliminado."));
 };
 
-/* IMPRESIÓN COMPLETA (INCLUYE CHOFER, MATRÍCULA Y DEPÓSITO) */
+/* IMPRESIÓN COMPLETA */
 window.imprimirPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
@@ -1591,7 +1593,7 @@ window.imprimirSolicitud = function(id){
   window.print();
 };
 
-/* VENTANA MODAL "VER SENASA" (CON DETALLE COMPLETO Y BOTÓN IMPRIMIR) */
+/* VENTANA MODAL "VER SENASA" */
 window.verDetalleSenasa = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
@@ -2054,7 +2056,7 @@ window.abrirGestionarSolicitud = function(id){
   });
 };
 
-/* RECEPCIÓN Y AJUSTE EN EL DEPÓSITO + CARGA DE STOCK */
+
 window.abrirRecepcionDeposito = function(id) {
   const s = solicitudesCache.find(x => x.id === id);
   if(!s) return;
@@ -2064,31 +2066,28 @@ window.abrirRecepcionDeposito = function(id) {
 
   openModal(`
     <h3>Confirmar Recepción de Mercadería</h3>
-    <p class="modal-sub">Ajuste los valores reales recibidos y seleccione el depósito donde ingresará el stock.</p>
+    <p class="modal-sub">Ajuste los valores recibidos y seleccione el **depósito individual** donde ingresará cada producto.</p>
     <form id="form-recepcion-deposito">
-      <div class="field">
-        <label>Depósito de Destino para ingresar Stock</label>
-        <select id="rec-deposito" required>
-          <option value="">-- Seleccionar Depósito --</option>
-          ${depOpts}
-        </select>
-      </div>
-      <div class="field"><label>Verificación e Ingreso de Ítems</label>
+      <div class="field"><label>Verificación y Destino de Ítems</label>
         <div class="items-repeater" id="rec-items"></div>
       </div>
-      <div class="field"><label>Observaciones del Depósito (opcional)</label><textarea id="rec-obs" placeholder="Ej: Se recibieron 20kg en lugar de 30kg por faltante del camión."></textarea></div>
+      <div class="field"><label>Observaciones del Depósito (opcional)</label><textarea id="rec-obs" placeholder="Ej: HUEVOS ingresaron a Moreno, el resto a Cabral."></textarea></div>
       <div class="modal-actions"><button type="submit" class="btn btn-primary">Confirmar e Ingresar al Stock</button></div>
     </form>
   `);
 
   const box = document.getElementById("rec-items");
-  prods.forEach(p => {
+  prods.forEach((p, idx) => {
     box.insertAdjacentHTML("beforeend", `
-      <div class="item-row" style="flex-wrap:wrap;">
-        <input type="text" class="rec-prod" value="${escapeHtml(p.producto)}" placeholder="Producto" required style="flex:2;">
-        <input type="number" step="any" class="rec-cant" value="${escapeHtml(p.cantidad)}" placeholder="Cant Recibida" required style="flex:1;">
-        <input type="text" class="rec-unidad" value="${escapeHtml(p.unidad||'KG')}" placeholder="Unidad" required style="flex:1;">
-        <select class="rec-estado-item" style="padding:8px; font-size:12px; flex:1;">
+      <div class="item-row" style="flex-wrap:wrap; gap:6px; background:#F8FAFC; padding:8px; border-radius:8px; border:1px solid var(--line);">
+        <input type="text" class="rec-prod" value="${escapeHtml(p.producto)}" placeholder="Producto" required style="flex:2; min-width:130px;">
+        <input type="number" step="any" class="rec-cant" value="${escapeHtml(p.cantidad)}" placeholder="Cant" required style="flex:1; max-width:80px;">
+        <input type="text" class="rec-unidad" value="${escapeHtml(p.unidad||'KG')}" placeholder="Unidad" required style="flex:1; max-width:70px;">
+        <select class="rec-deposito-item" required style="flex:2; min-width:130px;">
+          <option value="">-- Depósito Destino --</option>
+          ${depOpts}
+        </select>
+        <select class="rec-estado-item" style="flex:1.2; min-width:100px;">
           <option value="recibido">Aceptado</option>
           <option value="devuelto">Devuelto / Rechazado</option>
         </select>
@@ -2098,26 +2097,33 @@ window.abrirRecepcionDeposito = function(id) {
 
   document.getElementById("form-recepcion-deposito").addEventListener("submit", e => {
     e.preventDefault();
-    const depositoDestino = document.getElementById("rec-deposito").value.trim();
-    if(!depositoDestino) { alert("Por favor seleccione el depósito de destino."); return; }
 
     const itemsRecibidos = Array.from(document.querySelectorAll("#rec-items .item-row")).map(row => ({
       producto: row.querySelector(".rec-prod").value.trim(),
       cantidad: parseFloat(row.querySelector(".rec-cant").value) || 0,
       unidad: row.querySelector(".rec-unidad").value.trim(),
+      depositoDestino: row.querySelector(".rec-deposito-item").value.trim(),
       estadoItem: row.querySelector(".rec-estado-item").value
     })).filter(i => i.producto);
 
+
+    for(let it of itemsRecibidos) {
+      if(it.estadoItem === "recibido" && !it.depositoDestino) {
+        alert(`Por favor seleccione un depósito de destino para el producto "${it.producto}".`);
+        return;
+      }
+    }
+
     itemsRecibidos.forEach(it => {
       if(it.estadoItem === "recibido" && it.cantidad > 0) {
-        const exist = stockCache.find(st => st.nombre.toLowerCase() === it.producto.toLowerCase() && (st.deposito || "") === depositoDestino);
+        const exist = stockCache.find(st => st.nombre.toLowerCase() === it.producto.toLowerCase() && (st.deposito || "") === it.depositoDestino);
         if(exist) {
           const actual = parseFloat(exist.cantidadReal) ?? parseFloat(exist.cantidad) ?? 0;
           db.collection("stock").doc(exist.id).update({ cantidadReal: actual + it.cantidad });
         } else {
           db.collection("stock").add({
             nombre: it.producto,
-            deposito: depositoDestino,
+            deposito: it.depositoDestino,
             cantidadReal: it.cantidad,
             unidad: it.unidad,
             cantidadConfirmada: 0
@@ -2129,11 +2135,10 @@ window.abrirRecepcionDeposito = function(id) {
     db.collection("solicitudes").doc(id).update({
       estado: "recibida",
       productosRecibidos: itemsRecibidos,
-      depositoIngreso: depositoDestino,
       observacionesDeposito: document.getElementById("rec-obs").value.trim(),
       fechaRecepcion: firebase.firestore.FieldValue.serverTimestamp(),
       recibidoPor: currentUser.label
-    }).then(() => { showToast("Stock ingresado correctamente."); closeModal(); });
+    }).then(() => { showToast("Stock distribuido e ingresado correctamente."); closeModal(); });
   });
 };
 </script>
