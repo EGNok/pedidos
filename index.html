@@ -705,7 +705,7 @@
             <div class="table-responsive">
               <table>
                 <thead>
-                  <tr><th>Productos pedidos</th><th>Entrega solicitada</th><th>Estado</th><th>Respuesta de oficina</th><th>Acciones</th></tr>
+                  <tr><th>Productos pedidos</th><th>Llegada Estimada</th><th>Estado</th><th>Respuesta de Oficina</th><th>Acciones</th></tr>
                 </thead>
                 <tbody id="de-solicitudes-body"></tbody>
               </table>
@@ -1229,7 +1229,6 @@ function renderPedidosDeposito(){
         <td>${renderItemsBlock(p)}${p.aclaracionOficina ? `<div class="nota-oficina"><strong>Aclaración:</strong> ${escapeHtml(p.aclaracionOficina)}</div>` : ""}</td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="abrirArmarPedido('${p.id}')">✓ Confirmar</button><br>
-          <button class="btn btn-secondary btn-sm" style="margin-top:4px;" onclick="abrirFormularioPedido('${p.id}')">✏️ Editar</button><br>
           <button class="btn btn-danger btn-sm" style="margin-top:4px;" onclick="abrirSolicitarFaltantes('${p.id}')">+ Pedir</button><br>
           <button class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="imprimirPedido('${p.id}')">Imprimir</button>
         </td>
@@ -1547,7 +1546,7 @@ window.imprimirPedido = function(id){
 
   document.getElementById("print-area").innerHTML = `
     <div class="nota-pedido">
-      <div class="np-print-title">NOTA DE PEDIDO</div>
+      <div class="np-print-title">NOTA DE PEDIDO / SENASA</div>
       ${headHtml}
       ${itemsHtml}
       ${aclaracionHtml}
@@ -1574,8 +1573,8 @@ window.imprimirSolicitud = function(id){
     <table class="np-print-head">
       <tr><td class="np-print-lbl">SOLICITADO POR:</td><td colspan="3">${escapeHtml(s.solicitadoPor||"")}</td></tr>
       <tr>
-        <td class="np-print-lbl">Fecha de Solicitud:</td>
-        <td>${fmtDate(s.fechaEntregaSolicitada)}</td>
+        <td class="np-print-lbl">Llegada Confirmada:</td>
+        <td>${fmtDate(s.fechaLlegada || s.fechaEntregaSolicitada)}</td>
         <td class="np-print-lbl right">Estado:</td>
         <td class="np-print-val bold">${escapeHtml(s.estado||"")}</td>
       </tr>
@@ -1945,11 +1944,12 @@ function renderSolicitudesDeposito(){
     }
 
     const prods = s.productosAprobados || s.productos || [];
-    const respHtml = s.comentarioOficina ? `<div style="font-size:12px; color:var(--ink-soft);"><b>Oficina:</b> ${escapeHtml(s.comentarioOficina)}</div>` : '—';
+    const fechaLlegadaTxt = s.fechaLlegada ? `<strong style="color:var(--oficina);">${fmtDate(s.fechaLlegada)}</strong>` : fmtDate(s.fechaEntregaSolicitada);
+    const respHtml = s.comentarioOficina ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:2px;"><b>Oficina:</b> ${escapeHtml(s.comentarioOficina)}</div>` : '—';
 
     return `<tr>
       <td>${productosResumen(prods)}</td>
-      <td>${fmtDate(s.fechaLlegada || s.fechaEntregaSolicitada)}</td>
+      <td>${fechaLlegadaTxt}</td>
       <td>${badge}</td>
       <td>${respHtml}</td>
       <td>
@@ -2108,7 +2108,6 @@ window.abrirRecepcionDeposito = function(id) {
       estadoItem: row.querySelector(".rec-estado-item").value
     })).filter(i => i.producto);
 
-    // Sumar o agregar al stock
     itemsRecibidos.forEach(it => {
       if(it.estadoItem === "recibido" && it.cantidad > 0) {
         const exist = stockCache.find(st => st.nombre.toLowerCase() === it.producto.toLowerCase() && (st.deposito || "") === depositoDestino);
