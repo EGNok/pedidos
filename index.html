@@ -718,7 +718,7 @@
       </div>
     </div>
 
-    
+    <!-- VENTANA STOCK -->
     <div id="window-stock" style="display:none;">
       <div class="section-head">
         <h2>Inventario y Control de Stock <span class="count" id="stock-count"></span></h2>
@@ -1483,7 +1483,7 @@ window.eliminarCliente = function(id) {
   if(confirm("¿Eliminar cliente?")) db.collection("clientes").doc(id).delete().then(() => showToast("Cliente eliminado."));
 };
 
-/* IMPRESIÓN COMPLETA */
+/* IMPRESIÓN COMPLETA (INCLUYE N° DE SPR) */
 window.imprimirPedido = function(id){
   const p = pedidosCache.find(x=>x.id===id);
   if(!p) return;
@@ -1508,20 +1508,22 @@ window.imprimirPedido = function(id){
         <td class="np-print-val bold">${escapeHtml(p.numeroPedido||"")}</td>
       </tr>
       <tr>
-        <td class="np-print-lbl italic">Chofer:</td>
-        <td>${escapeHtml(p.numeroChofer||"—")}</td>
+        <td class="np-print-lbl italic">N° de SPR:</td>
+        <td>${escapeHtml(p.numeroSPR||"—")}</td>
         <td class="np-print-lbl right">Fecha Pedido:</td>
         <td class="np-print-val bold">${fmtDate(p.fecha)}</td>
       </tr>
       <tr>
-        <td class="np-print-lbl italic">Matrícula:</td>
-        <td>${escapeHtml(p.matricula||"—")}</td>
+        <td class="np-print-lbl italic">Chofer:</td>
+        <td>${escapeHtml(p.numeroChofer||"—")}</td>
         <td class="np-print-lbl right">Fecha Entrega:</td>
         <td class="np-print-val bold">${fmtDate(p.fechaEntrega)}</td>
       </tr>
       <tr>
-        <td class="np-print-lbl italic">Depósito Origen:</td>
-        <td colspan="3" class="np-print-val bold">${escapeHtml(depositoOrigen)}</td>
+        <td class="np-print-lbl italic">Matrícula:</td>
+        <td>${escapeHtml(p.matricula||"—")}</td>
+        <td class="np-print-lbl right">Depósito Origen:</td>
+        <td class="np-print-val bold">${escapeHtml(depositoOrigen)}</td>
       </tr>
     </table>`;
 
@@ -1548,7 +1550,7 @@ window.imprimirPedido = function(id){
 
   document.getElementById("print-area").innerHTML = `
     <div class="nota-pedido">
-      <div class="np-print-title">NOTA DE PEDIDO</div>
+      <div class="np-print-title">NOTA DE PEDIDO / SENASA</div>
       ${headHtml}
       ${itemsHtml}
       ${aclaracionHtml}
@@ -1612,6 +1614,7 @@ window.verDetalleSenasa = function(id){
     <div class="detail-block">
       <div class="d-row"><span>Empresa</span><span>${escapeHtml(p.empresa)}</span></div>
       <div class="d-row"><span>Dirección / Entidad</span><span>${escapeHtml(p.entidad||"—")}</span></div>
+      <div class="d-row"><span>N° de SPR</span><span>${escapeHtml(p.numeroSPR||"—")}</span></div>
       <div class="d-row"><span>Depósito de Origen</span><span>${escapeHtml(depositoOrigen)}</span></div>
       <div class="d-row"><span>Chofer</span><span>${escapeHtml(p.numeroChofer||"—")}</span></div>
       <div class="d-row"><span>Matrícula</span><span>${escapeHtml(p.matricula||"—")}</span></div>
@@ -2056,7 +2059,7 @@ window.abrirGestionarSolicitud = function(id){
   });
 };
 
-
+/* RECEPCIÓN Y AJUSTE EN EL DEPÓSITO */
 window.abrirRecepcionDeposito = function(id) {
   const s = solicitudesCache.find(x => x.id === id);
   if(!s) return;
@@ -2105,7 +2108,6 @@ window.abrirRecepcionDeposito = function(id) {
       depositoDestino: row.querySelector(".rec-deposito-item").value.trim(),
       estadoItem: row.querySelector(".rec-estado-item").value
     })).filter(i => i.producto);
-
 
     for(let it of itemsRecibidos) {
       if(it.estadoItem === "recibido" && !it.depositoDestino) {
